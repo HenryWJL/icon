@@ -1,5 +1,5 @@
 seed: 42
-device: "cuda:0"
+device: "cuda:5"
 dataset_dir: data/${task_name}
 batch_size: 128
 num_epochs: 600
@@ -9,7 +9,7 @@ val:
   ckpt_manager:
     _target_: icon.utils.file_utils.CheckpointManager
     save_dir: outputs/${task_name}/${algo_name}/${now:%Y-%m-%d}/${now:%H-%M-%S}/checkpoints
-    val_freq: 50
+    val_freq: 100
     topk: 5
     mode: "min"
     save_last: true
