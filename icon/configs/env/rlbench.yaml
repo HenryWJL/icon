@@ -1,0 +1,10 @@
+_target_: cross_embodiment.envs.rlbench.RLBenchEnv
+
+task: ${task_name}
+robot: "panda"
+image_size: 224
+cameras: ${task.cameras}
+joint_properties: ${task.joint_properties}
+max_joint_dof: ${task.max_joint_dof}
+arm_controller: ${task.arm_controller}
+headless: false
