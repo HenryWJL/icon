@@ -1,0 +1,8 @@
+__pycache__/
+*.egg-info/
+robosuite/
+rlbench/
+data/
+outputs/
+wandb/
+checkpoints/
