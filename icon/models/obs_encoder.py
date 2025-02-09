@@ -25,6 +25,58 @@ class ViT(VisionTransformer):
         return x
 
 
+class DecoderViT(ViT):
+
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        patch_size: int,
+        embed_dim: int,
+        *args,
+        **kwargs
+    ) -> None:
+        super().__init__(*args, **kwargs)
+        self.decoder_embed = nn.Linear(in_channels, embed_dim)
+        self.decoder_pred = nn.Linear(embed_dim, patch_size ** 2 * out_channels)
+
+    def unpatchify(self, x: Tensor) -> Tensor:
+        H = int(x.shape[1] ** 0.5)
+        P = self.patch_embed.patch_size[0]
+        x = rearrange(x, 'b (h w) (p q c) -> b c (h p) (w q)', h=H, p=P, q=P)
+        return x
+
+    def forward(self, x: Tensor) -> Tensor:
+        x = self.decoder_embed(x)
+        cls_token = self.cls_token.expand(x.shape[0], -1, -1)
+        x = torch.cat([cls_token, x], dim=1)
+        x = x + self.pos_embed
+        x = self.blocks(x)
+        x = self.norm(x)
+        x = self.decoder_pred(x)
+        x = x[:, 1:]
+        x = self.unpatchify(x)
+        return x
+
+
+class AutoencoderViT(nn.Module):
+
+    def __init__(
+        self,
+        img_size: int,
+        patch_size: int,
+        encoder_embed_dim: int,
+        decoder_embed_dim: int,
+        num_encoder_heads: int,
+        num_decoder_heads: int,
+        num_encoder_layers: int,
+        num_decoder_layers: int,
+        *args,
+        **kwargs
+    ) -> None:
+        super().__init__()
+
+
 class IntraContrastViT(ViT):
 
     def __init__(

@@ -9,6 +9,7 @@ policy:
     embed_dim: ${algo.policy.noise_predictor.embed_dim}
     image_encoder:
       _target_: icon.models.obs_encoder.ViT
+      img_size: 224
       patch_size: 16
       embed_dim: 384
       depth: 12
