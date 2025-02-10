@@ -1,0 +1,25 @@
+train:
+  _target_: icon.utils.datasets.EpisodicDatasetWithMask
+  cameras: ${task.cameras}
+  action_horizon: ${task.action_horizon}
+  norm_modes: 
+    proprios: "max_min"
+    actions: "max_min"
+  transform_cfg:
+    resize_shape: 256
+    crop_shape: 224
+    random_crop: true
+    enable_imagenet_norm: false
+
+val:
+  _target_: icon.utils.datasets.EpisodicDataset
+  cameras: ${task.cameras}
+  action_horizon: ${task.action_horizon}
+  norm_modes: 
+    proprios: "max_min"
+    actions: "max_min"
+  transform_cfg:
+    resize_shape: 256
+    crop_shape: 224
+    random_crop: false
+    enable_imagenet_norm: false

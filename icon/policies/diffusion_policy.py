@@ -20,6 +20,7 @@ class DiffusionPolicy(nn.Module):
         noise_predictor: TransformerForDiffusion,
         noise_scheduler: Union[DDPMScheduler, DDIMScheduler],
         action_shape: List,
+        auxiliary_loss_coef: float,
         num_inference_timesteps: int
     ) -> None:
         super().__init__()
@@ -27,6 +28,7 @@ class DiffusionPolicy(nn.Module):
         self.noise_predictor = noise_predictor
         self.noise_scheduler = noise_scheduler
         self.action_shape = action_shape
+        self.auxiliary_loss_coef = auxiliary_loss_coef
         self.num_inference_timesteps = num_inference_timesteps
 
     def compute_losses(self, batch: Dict) -> Dict:
@@ -49,7 +51,7 @@ class DiffusionPolicy(nn.Module):
         elif self.noise_scheduler.config.prediction_type == "sample":
             target = actions
         action_loss = F.mse_loss(pred, target)
-        loss = action_loss + auxiliary_loss  
+        loss = action_loss + self.auxiliary_loss_coef * auxiliary_loss  
         loss_dict['action_loss'] = action_loss
         loss_dict['auxiliary_loss'] = auxiliary_loss
         loss_dict['loss'] = loss

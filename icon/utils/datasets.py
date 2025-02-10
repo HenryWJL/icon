@@ -17,7 +17,6 @@ class EpisodicDataset(Dataset):
         cameras: List,
         action_horizon: List,
         norm_modes: Dict,
-        load_masks: Optional[bool] = True,
         transform_cfg: Optional[Dict] = dict(),
     ) -> None:
         """
@@ -38,7 +37,6 @@ class EpisodicDataset(Dataset):
                 }
 
             norm_modes (dict): normalization modes.
-            load_masks (bool, optional): if True, load image masks.
             transform_cfg (dict): configuration of image transformations.
         """
         super().__init__()
@@ -47,7 +45,6 @@ class EpisodicDataset(Dataset):
         self.cameras = cameras
         self.action_horizon = action_horizon
         self.norm_modes = norm_modes
-        self.load_masks = load_masks
         self.transform_cfg = transform_cfg
         self.episode_lens = list()
         self.cumulative_episode_lens = list()
@@ -119,33 +116,13 @@ class EpisodicDataset(Dataset):
         episode_index, timestep = self._locate_transition(index)
         episode_path = self.episode_paths[episode_index]
         with zarr.open(episode_path, 'r') as f:
-            # Image masks
-            if self.load_masks:
-                masks = dict()
-                for camera in self.cameras:
-                    if camera in dict(f['/masks']).keys():
-                        mask = f[f'/masks/{camera}'][()][timestep]
-                        mask = torch.from_numpy(mask).float()
-                        masks[camera] = mask
-            else:
-                masks = None
             # Images
             images = dict()
             for camera in self.cameras:
                 image = f[f'/images/{camera}'][()][timestep]
                 image = torch.from_numpy(image).permute(2, 0, 1) / 255.0
-                # Image transformations. Note that image masks also require the same transformation.
-                mask = masks.get(camera) if masks is not None else None
-                if mask is not None:
-                    mask = mask.unsqueeze(0).repeat(3, 1, 1)
-                    image_mask_stack = torch.stack([image, mask])
-                    image, mask = self.transforms(image_mask_stack).chunk(2)
-                    image, mask = image.squeeze(0), (mask.squeeze(0)[0] > 0.5).float()
-                    images[camera] = image
-                    masks[camera] = mask
-                else:
-                    image = self.transforms(image)
-                    images[camera] = image
+                image = self.transforms(image)
+                images[camera] = image
             # Proprioception
             proprios = torch.from_numpy(f['/proprios'][()][timestep]).float()
             # Actions
@@ -159,8 +136,63 @@ class EpisodicDataset(Dataset):
                 proprios=proprios,
                 actions=actions
             )
-            if masks is not None:
-                items['masks'] = masks
+            items = self.normalizer.normalize(items)
+            return items
+               
+    def __len__(self) -> int:
+        return self.cumulative_episode_lens[-1]
+    
+    def set_normalizer(self, normalizer: Normalizer) -> None:
+        self.normalizer = normalizer
+
+    def get_normalizer(self) -> Normalizer:
+        return self.normalizer
+    
+
+class EpisodicDatasetWithMask(EpisodicDataset):
+
+    def __getitem__(self, index: int) -> Tuple:
+        episode_index, timestep = self._locate_transition(index)
+        episode_path = self.episode_paths[episode_index]
+        with zarr.open(episode_path, 'r') as f:
+            # Image masks
+            masks = dict()
+            for camera in self.cameras:
+                if camera in dict(f['/masks']).keys():
+                    mask = f[f'/masks/{camera}'][()][timestep]
+                    mask = torch.from_numpy(mask).float()
+                    masks[camera] = mask
+            # Images
+            images = dict()
+            for camera in self.cameras:
+                image = f[f'/images/{camera}'][()][timestep]
+                image = torch.from_numpy(image).permute(2, 0, 1) / 255.0
+                # Image transformations. Note that image masks also require the same transformation.
+                mask = masks.get(camera)
+                if mask is None:
+                    image = self.transforms(image)
+                    images[camera] = image
+                else:
+                    mask = mask.unsqueeze(0).repeat(3, 1, 1)
+                    image_mask_stack = torch.stack([image, mask])
+                    image, mask = self.transforms(image_mask_stack).chunk(2)
+                    image, mask = image.squeeze(0), (mask.squeeze(0)[0] > 0.5).float()
+                    images[camera] = image
+                    masks[camera] = mask
+            # Proprioception
+            proprios = torch.from_numpy(f['/proprios'][()][timestep]).float()
+            # Actions
+            actions = torch.from_numpy(f['/actions'][()]).float()
+            H = self.action_horizon
+            actions_padded = torch.cat([actions, actions[-1:].repeat(H - 1, 1)])
+            actions = actions_padded[timestep: (timestep + H)]
+            
+            items = dict(
+                images=images,
+                masks=masks,
+                proprios=proprios,
+                actions=actions
+            )
             items = self.normalizer.normalize(items)
             return items
                

@@ -9,9 +9,16 @@ from icon.utils.sample_utils import random_sample, farthest_point_sample
 from icon.utils.loss_utils import info_nce_loss
 
 
+def patchify(x: Tensor, patch_size: int) -> Tensor:
+    height, width = x.shape[-2:]
+    assert height == width and height % patch_size == 0
+    x = rearrange(x, 'b c (h p) (w q) -> b (h w) (p q c)', p=patch_size, q=patch_size)
+    return x
+
+
 class ViT(VisionTransformer):
 
-    def forward_train(self, x: Tensor) -> Tensor:
+    def forward_train(self, x: Tensor) -> Tuple[Tensor, Tensor]:
         return self.forward(x), 0.0
     
     def forward(self, x: Tensor) -> Tensor:
@@ -36,26 +43,29 @@ class DecoderViT(ViT):
         *args,
         **kwargs
     ) -> None:
-        super().__init__(*args, **kwargs)
+        super().__init__(
+            patch_size=patch_size,
+            embed_dim=embed_dim,
+            *args,
+            **kwargs
+        )
+        self.patch_size = patch_size
         self.decoder_embed = nn.Linear(in_channels, embed_dim)
         self.decoder_pred = nn.Linear(embed_dim, patch_size ** 2 * out_channels)
-
-    def unpatchify(self, x: Tensor) -> Tensor:
-        H = int(x.shape[1] ** 0.5)
-        P = self.patch_embed.patch_size[0]
-        x = rearrange(x, 'b (h w) (p q c) -> b c (h p) (w q)', h=H, p=P, q=P)
-        return x
+        nn.init.normal_(self.decoder_embed.weight, std=0.02)
+        nn.init.zeros_(self.decoder_embed.bias)
+        nn.init.normal_(self.decoder_pred.weight, std=0.02)
+        nn.init.zeros_(self.decoder_pred.bias)
+        del self.patch_embed
+        del self.cls_token
 
     def forward(self, x: Tensor) -> Tensor:
         x = self.decoder_embed(x)
-        cls_token = self.cls_token.expand(x.shape[0], -1, -1)
-        x = torch.cat([cls_token, x], dim=1)
         x = x + self.pos_embed
         x = self.blocks(x)
         x = self.norm(x)
         x = self.decoder_pred(x)
         x = x[:, 1:]
-        x = self.unpatchify(x)
         return x
 
 
@@ -70,14 +80,85 @@ class AutoencoderViT(nn.Module):
         num_encoder_heads: int,
         num_decoder_heads: int,
         num_encoder_layers: int,
-        num_decoder_layers: int,
-        *args,
-        **kwargs
+        num_decoder_layers: int
     ) -> None:
         super().__init__()
+        self.encoder = ViT(
+            img_size=img_size,
+            patch_size=patch_size,
+            embed_dim=encoder_embed_dim,
+            depth=num_encoder_layers,
+            num_heads=num_encoder_heads
+        )
+        self.decoder = DecoderViT(
+            in_channels=encoder_embed_dim,
+            out_channels=3,
+            patch_size=patch_size,
+            embed_dim=decoder_embed_dim,
+            depth=num_decoder_layers,
+            num_heads=num_decoder_heads
+        )
+        self.patch_size = patch_size
+        self.num_features = encoder_embed_dim
+
+    def forward_train(self, x: Tensor) -> Tuple[Tensor, Tensor]:
+        latent = self.encoder.forward_features(x)
+        pred = self.decoder(latent)
+        target = patchify(x, self.patch_size)
+        eps = 1e-6
+        mean = target.mean(dim=-1, keepdim=True)
+        var = target.var(dim=-1, keepdim=True)
+        target = (target - mean) / (var + eps) ** 0.5
+        loss = ((pred - target) ** 2).mean(dim=-1).mean()
+        return latent[:, 0], loss
+    
+    def forward(self, x: Tensor) -> Tensor:
+        return self.encoder(x)
+    
+
+class SEARViT(AutoencoderViT):
+
+    def __init__(
+        self,
+        mask_loss_coef: float,
+        **kwargs
+    ) -> None:
+        super().__init__(**kwargs)
+        self.mask_loss_coef = mask_loss_coef
+        self.mask_decoder = DecoderViT(
+            in_channels=kwargs['encoder_embed_dim'],
+            out_channels=1,
+            patch_size=kwargs['patch_size'],
+            embed_dim=kwargs['decoder_embed_dim'],
+            depth=kwargs['num_decoder_layers'],
+            num_heads=kwargs['num_decoder_heads']
+        )
+
+    def forward_train(self, x: Tensor, mask: Union[Tensor, None] = None) -> Tuple[Tensor, Tensor]:
+        if mask is None:
+            return self.forward(x), 0.0
+        else:
+            latent = self.encoder.forward_features(x)
+            image_pred = self.decoder(latent)
+            mask_pred = self.mask_decoder(latent)
+            image_target = patchify(x, self.patch_size)
+            mask_target = patchify(mask.unsqueeze(1), self.patch_size)
+            # Image reconstruction loss
+            eps = 1e-6
+            mean = image_target.mean(dim=-1, keepdim=True)
+            var = image_target.var(dim=-1, keepdim=True)
+            image_target = (image_target - mean) / (var + eps) ** 0.5
+            image_loss = ((image_pred - image_target) ** 2).mean(dim=-1).mean()
+            # Mask reconstruction loss
+            mean = mask_target.mean(dim=-1, keepdim=True)
+            var = mask_target.var(dim=-1, keepdim=True)
+            mask_target = (mask_target - mean) / (var + eps) ** 0.5
+            mask_loss = ((mask_pred - mask_target) ** 2).mean(dim=-1).mean()
+            loss = image_loss + self.mask_loss_coef * mask_loss
+            return latent[:, 0], loss
 
 
-class IntraContrastViT(ViT):
+class IConViT(ViT):
 
     def __init__(
         self,
@@ -97,13 +178,6 @@ class IntraContrastViT(ViT):
         self.enable_fps = enable_fps
         self.enable_weighted_sum = enable_weighted_sum
         self.gamma = gamma
-
-    def patchify(self, x: Tensor) -> Tensor:
-        H, W = x.shape[1:]
-        P = self.patch_embed.patch_size[0]
-        assert H == W and H % P == 0
-        x = rearrange(x, 'b (h p) (w q) -> b (h w) (p q)', p=P, q=P)
-        return x
     
     def forward_loss(self, x: Tensor, mask: Tensor) -> Tensor:
         """
@@ -117,8 +191,8 @@ class IntraContrastViT(ViT):
         """
         tokens = x[:, 1:]
         # Count masked and unmasked tokens
-        count_mask = torch.count_nonzero(mask, dim=1).unsqueeze(1)
-        count_unmask = tokens.shape[1] - count_mask
+        count_mask = mask.sum(dim=1).unsqueeze(1)
+        count_unmask = (1.0 - mask).sum(dim=1).unsqueeze(1)
         # Obtain queries corresponding to masked and unmasked regions.
         eps = 1e-6
         query_mask = (tokens * mask.unsqueeze(-1)).sum(dim=1) / (count_mask + eps)
@@ -152,7 +226,7 @@ class IntraContrastViT(ViT):
         else:
             # For each mask patch, it is regarded as fully masked if the square of mask
             # region is larger than half of the total patch square.
-            mask = self.patchify(mask)
+            mask = patchify(mask.unsqueeze(1), self.patch_embed.patch_size[0])
             mask = (mask.sum(dim=-1) > self.patch_embed.patch_size[0] ** 2 / 2).float()
             x = self.patch_embed(x)
             cls_token = self.cls_token.expand(x.shape[0], -1, -1)

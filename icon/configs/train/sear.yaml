@@ -1,10 +1,10 @@
 defaults:
   - _self_
-  - dataset: icon
+  - dataset: sear
   - dataloader: default
 
 seed: 42
-device: "cuda:5"
+device: "cuda:7"
 batch_size: 128
 num_epochs: 600
 dataset_root_dir: data/${task_name}

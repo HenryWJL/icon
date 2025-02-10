@@ -5,11 +5,14 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 from pathlib import Path
-from typing import Union, Dict
+from typing import Dict
 from copy import deepcopy
 from tqdm import tqdm
 from omegaconf import OmegaConf
-from icon.utils.file_utils import str2path, create_logger
+from icon.policies.diffusion_policy import DiffusionPolicy
+from icon.utils.datasets import EpisodicDataset
+from icon.utils.train_utils import EMA, to_device
+from icon.utils.file_utils import str2path, create_logger, CheckpointManager
 
 
 class WorkSpace:
@@ -23,27 +26,45 @@ class WorkSpace:
         torch.manual_seed(seed)
         
         self.device = torch.device(self.cfg.train.device)
-        self.policy = hydra.utils.instantiate(self.cfg.algo.policy)
+        self.policy: DiffusionPolicy = hydra.utils.instantiate(self.cfg.algo.policy)
         self.policy.to(self.device)
         self.logger = create_logger()
         self.global_step = 0
         self.normalizer = None
 
     def configure_dataloader(self) -> None:
-        dataset_dir = str2path(self.cfg.train.dataset_dir)
-        if not dataset_dir.joinpath("train").is_dir():
-            self.cfg.dataloader.train_loader.dataset.episode_dir = str(dataset_dir)
-        self.train_dataloader = hydra.utils.instantiate(self.cfg.dataloader.train_loader)
-        self.normalizer = self.train_dataloader.dataset.get_normalizer()
-        if not dataset_dir.joinpath("val").is_dir():
+        dataset_root_dir = str2path(self.cfg.train.dataset_root_dir)
+        train_dataset_dir = dataset_root_dir.joinpath("train")
+        val_dataset_dir = dataset_root_dir.joinpath("val")
+        if not val_dataset_dir.is_dir():
             self.cfg.train.val.enable = False
+            train_dataset_dir = dataset_root_dir
             self.logger.warning("Validation is disabled as no validation set is provided.")
-        else:
-            self.val_dataloader = hydra.utils.instantiate(self.cfg.dataloader.val_loader)
         
+        train_dataset: EpisodicDataset = hydra.utils.instantiate(
+            self.cfg.train.dataset.train,
+            episode_dir=train_dataset_dir
+        )
+        self.train_dataloader = hydra.utils.instantiate(
+            self.cfg.train.dataloader.train,
+            dataset=train_dataset
+        )
+        self.normalizer = train_dataset.get_normalizer()
+        
+        if self.cfg.train.val.enable:
+            val_dataset: EpisodicDataset = hydra.utils.instantiate(
+                self.cfg.train.dataset.val,
+                episode_dir=val_dataset_dir
+            )
+            val_dataset.set_normalizer(self.normalizer)
+            self.val_dataloader = hydra.utils.instantiate(
+                self.cfg.train.dataloader.val,
+                dataset=val_dataset
+            )
+            
     def train(self) -> None:
         self.configure_dataloader()
-        ckpt_manager = hydra.utils.instantiate(self.cfg.train.val.ckpt_manager)
+        ckpt_manager: CheckpointManager = hydra.utils.instantiate(self.cfg.train.val.ckpt_manager)
         optimizer = self.policy.configure_optimizer(**self.cfg.train.optimizer)
         num_training_steps = self.cfg.train.num_epochs * len(self.train_dataloader)
         lr_scheduler = hydra.utils.instantiate(
@@ -55,7 +76,7 @@ class WorkSpace:
         enable_ema = self.cfg.train.ema.enable
         if enable_ema:
             self.ema_model = deepcopy(self.policy)
-            ema = hydra.utils.instantiate(
+            ema: EMA = hydra.utils.instantiate(
                 self.cfg.train.ema.runner,
                 model=self.ema_model
             )
@@ -66,10 +87,9 @@ class WorkSpace:
                 config=OmegaConf.to_container(self.cfg, resolve=True),
                 **self.cfg.train.wandb.logging
             )
-        
+        # Training
         num_epochs = self.cfg.train.num_epochs
         for epoch in tqdm(range(num_epochs), desc="Policy Training"):
-            # Training
             train_losses = dict(
                 action_loss=list(),
                 auxiliary_loss=list(),
@@ -77,12 +97,7 @@ class WorkSpace:
             )
             self.policy.train()
             for _, batch in enumerate(self.train_dataloader):
-                for k, v in batch.items():
-                    if isinstance(v, dict):
-                        for p, q in v.items():
-                            batch[k][p] = q.to(self.device)
-                    else:
-                        batch[k] = v.to(self.device)
+                to_device(batch, self.device)
                 loss_dict = self.policy.compute_losses(batch)
                 loss = loss_dict['loss']
                 loss.backward()
@@ -105,17 +120,16 @@ class WorkSpace:
             # Validation
             if self.cfg.train.val.enable:
                 if (epoch + 1) % self.cfg.train.val.ckpt_manager.val_freq == 0:
-                    self.policy.eval()
+                    policy = self.policy
+                    if enable_ema:
+                        policy = self.ema_model
+                    policy.eval()
                     val_loss = list()
                     with torch.no_grad():
                         for _, batch in enumerate(self.val_dataloader):
                             for k, v in batch.items():
-                                if isinstance(v, dict):
-                                    for p, q in v.items():
-                                        batch[k][p] = q.to(self.device)
-                                else:
-                                    batch[k] = v.to(self.device)
-                            actions_pred = self.policy.sample(batch)
+                                to_device(batch, self.device)
+                            actions_pred = policy.sample(batch)
                             loss = F.mse_loss(actions_pred, batch['actions'])
                             val_loss.append(loss.detach())
 
@@ -128,37 +142,29 @@ class WorkSpace:
 
         if self.cfg.train.val.enable:
             ckpt_manager.save_topk()
-        else:
-            ckpt_manager.save(self.state_dict())
-        self.logger.info("Checkpoints saved.")
+            self.logger.info("Checkpoints saved.")
 
     def predict_actions(self, obs: Dict) -> torch.Tensor:
         if self.normalizer is not None:
             obs = self.normalizer.normalize(obs)
-        for k, v in obs.items():
-            if isinstance(v, dict):
-                for p, q in v.items():
-                    obs[k][p] = q.to(self.device)
-            else:
-                obs[k] = v.to(self.device)
+        to_device(obs, self.device)
         actions = self.policy.sample(obs)
         if self.normalizer is not None:
             actions = self.normalizer.unnormalize(actions)
         return actions
 
-    def load_checkpoint(self, checkpoint: Union[str, Path]) -> None:
-        checkpoint = str2path(checkpoint)
+    def load_checkpoint(self, checkpoint: str) -> None:
         if checkpoint.is_file():
-            state_dict = torch.load(str(checkpoint), map_location=self.device)
+            state_dict = torch.load(checkpoint, map_location=self.device)
             self.policy.load_state_dict(state_dict['model'])
             self.normalizer = state_dict['normalizer']
         else:
             raise FileExistsError("Checkpoint does not exist!")
 
-    def state_dict(self) -> Dict:
+    def state_dict(self, *args, **kwargs) -> Dict:
         return dict(
-            model=self.ema_model.state_dict() \
+            model=self.ema_model.state_dict(*args, **kwargs) \
                 if self.cfg.train.ema.enable \
-                else self.policy.state_dict(),
+                else self.policy.state_dict(*args, **kwargs),
             normalizer=self.normalizer
         )

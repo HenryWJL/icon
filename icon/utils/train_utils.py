@@ -1,12 +1,21 @@
 import torch
 import torch.nn as nn
 from torch.nn.modules.batchnorm import _BatchNorm
-from typing import Optional, Union, Tuple, List
+from typing import Optional, Union, Tuple, List, Dict
 from diffusers.optimization import (
     SchedulerType,
     Optimizer,
     TYPE_TO_SCHEDULER_FUNCTION
 )
+
+
+def to_device(batch: Dict, device: torch.device) -> None:
+    for k, v in batch.items():
+        if isinstance(v, dict):
+            for p, q in v.items():
+                batch[k][p] = q.to(device)
+        else:
+            batch[k] = v.to(device)
 
 
 # Adapted from https://github.com/real-stanford/diffusion_policy/blob/548a52bbb105518058e27bf34dcf90bf6f73681a/diffusion_policy/model/diffusion/transformer_for_diffusion.py#L197

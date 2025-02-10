@@ -35,4 +35,5 @@ policy:
       prediction_type: "epsilon"
 
   action_shape: ${task.action_shape}
+  auxiliary_loss_coef: 0.0
   num_inference_timesteps: 8

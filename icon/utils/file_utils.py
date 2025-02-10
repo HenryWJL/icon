@@ -73,9 +73,6 @@ class CheckpointManager:
         self.state_dicts.append(state_dict)
         self.global_step += 1
 
-    def save(self, state_dict: Dict) -> None:
-        torch.save(state_dict, str(self.save_dir.joinpath("checkpoint.pth")))
-
     def save_topk(self) -> None:
         if len(self.state_dicts) == 0:
             print("WARNING: No data stored in the buffer. Calling this function would save nothing.")

@@ -3,7 +3,6 @@ defaults:
   - task: close_drawer
   - algo: icon
   - train: ${algo}
-  - dataloader: ${algo}
   - env: rlbench
 
 _target_: icon.workspaces.workspace.WorkSpace
