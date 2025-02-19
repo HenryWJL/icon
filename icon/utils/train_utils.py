@@ -1,22 +1,17 @@
+import random
 import torch
 import torch.nn as nn
+import numpy as np
+from torch.optim import Optimizer
 from torch.nn.modules.batchnorm import _BatchNorm
-from typing import Optional, Union, Tuple, List, Dict
-from diffusers.optimization import (
-    SchedulerType,
-    Optimizer,
-    TYPE_TO_SCHEDULER_FUNCTION
-)
+from typing import Optional, Union, Tuple, List
+from diffusers.optimization import SchedulerType, TYPE_TO_SCHEDULER_FUNCTION
 
 
-def to_device(batch: Dict, device: torch.device) -> None:
-    for k, v in batch.items():
-        if isinstance(v, dict):
-            for p, q in v.items():
-                batch[k][p] = q.to(device)
-        else:
-            batch[k] = v.to(device)
-
+def set_seed(seed: int) -> None:
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+    random.seed(seed)
 
 # Adapted from https://github.com/real-stanford/diffusion_policy/blob/548a52bbb105518058e27bf34dcf90bf6f73681a/diffusion_policy/model/diffusion/transformer_for_diffusion.py#L197
 def get_optim_groups(
@@ -99,7 +94,6 @@ def get_scheduler(
         return schedule_func(optimizer, num_warmup_steps=num_warmup_steps, **kwargs)
     if num_training_steps is None:
         raise ValueError(f"{name} requires `num_training_steps`, please provide that argument.")
-
     return schedule_func(optimizer, num_warmup_steps=num_warmup_steps, num_training_steps=num_training_steps, **kwargs)
 
 # Adapted from https://github.com/real-stanford/diffusion_policy/blob/548a52bbb105518058e27bf34dcf90bf6f73681a/diffusion_policy/model/diffusion/ema_model.py
@@ -166,5 +160,4 @@ class EMA:
                 else:
                     ema_param.mul_(self.decay)
                     ema_param.add_(param.data.to(dtype=ema_param.dtype), alpha=1 - self.decay)
-
         self.optimization_step += 1

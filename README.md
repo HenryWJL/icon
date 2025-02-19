@@ -8,6 +8,14 @@ conda create -n icon_env python=3.9
 conda activate icon_env
 pip install -e .
 ```
+If you meet the following error:
+```
+libGL error: MESA-LOADER: failed to open swrast: /lib/x86_64-linux-gnu/libLLVM-12.so.1: undefined symbol: ffi_type_sint32, version LIBFFI_BASE_7.0
+```
+Downgrade `libffi` version ([reference](https://github.com/ContinuumIO/anaconda-issues/issues/13205)):
+```bash
+conda install -c conda-forge libffi=3.4.2
+```
 
 ### 💻 Simulation
 We tested our algorithm across 5 tasks from 1 simulation benchmarks. To reproduce our simulation results, you need to install every simulation framework following the instructions in the original codebase.  

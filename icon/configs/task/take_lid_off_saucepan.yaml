@@ -1,5 +1,4 @@
 name: take_lid_off_saucepan
-image_size: 1024
 cameras:
   - "front_camera"
   - "wrist_camera"
@@ -9,3 +8,11 @@ action_dim: 7
 action_shape:
   - ${task.action_horizon}
   - ${task.action_dim}
+env:
+  _target_: icon.envs.rlbench.RLBenchEnv
+  task: ${task_name}
+  cameras: ${task.cameras}
+  image_size: ${algo.policy.obs_encoder.image_encoder.img_size}
+  robot: "panda"
+  arm_controller: "ee_delta_pose"
+  headless: True

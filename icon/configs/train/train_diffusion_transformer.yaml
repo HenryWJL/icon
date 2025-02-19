@@ -1,20 +1,22 @@
-defaults:
-  - _self_
-  - dataset: sear
-  - dataloader: default
-
 seed: 42
-device: "cuda:7"
-batch_size: 64
+device: "cuda:0"
+batch_size: 128
 num_epochs: 600
-dataset_root_dir: data/${task_name}
+
+dataset:
+  _target_: icon.utils.datasets.EpisodicDataset
+  cameras: ${task.cameras}
+  prediction_horizon: ${algo.prediction_horizon}
+  obs_horizon: ${algo.obs_horizon}
+  action_horizon: ${algo.action_horizon}
+  image_mask_keys: []
 
 val:
   enable: true
   ckpt_manager:
     _target_: icon.utils.file_utils.CheckpointManager
     save_dir: outputs/${task_name}/${algo_name}/${now:%Y-%m-%d}/${now:%H-%M-%S}/checkpoints
-    val_freq: 100
+    val_freq: 50
     topk: 5
     mode: "min"
     save_last: true

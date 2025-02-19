@@ -98,9 +98,12 @@ class Normalizer:
             inputs = _normalize(inputs, norm_stats)
         elif isinstance(inputs, dict):
             for k, v in inputs.items():
-                if k in self.norm_stats.keys():
-                    norm_stats = self.norm_stats[k]
-                    inputs[k] = _normalize(v, norm_stats)
+                if isinstance(v, dict):
+                    inputs[k] = self.normalize(v)
+                elif isinstance(v, Tensor):
+                    if k in self.norm_stats.keys():
+                        norm_stats = self.norm_stats[k]
+                        inputs[k] = _normalize(v, norm_stats)
         return inputs
 
     def unnormalize(
@@ -134,8 +137,11 @@ class Normalizer:
             inputs = _unnormalize(inputs, norm_stats)
         elif isinstance(inputs, dict):
             for k, v in inputs.items():
-                if k in self.norm_stats.keys():
-                    norm_stats = self.norm_stats[k]
-                    inputs[k] = _unnormalize(v, norm_stats)
+                if isinstance(v, dict):
+                    inputs[k] = self.normalize(v)
+                elif isinstance(v, Tensor):
+                    if k in self.norm_stats.keys():
+                        norm_stats = self.norm_stats[k]
+                        inputs[k] = _unnormalize(v, norm_stats)
         return inputs
     

@@ -2,7 +2,7 @@ import os
 import torch
 import logging
 from pathlib import Path
-from typing import Optional, Union, Literal, Dict, Any
+from typing import Optional, Union, Literal, Dict
 
 
 def str2path(path: str) -> Path:
@@ -101,3 +101,5 @@ class CheckpointManager:
         self.global_step = 1
         self.metrics = list()
         self.state_dicts = list()
+
+

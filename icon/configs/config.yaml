@@ -1,11 +1,11 @@
 defaults:
   - _self_
   - task: close_drawer
-  - algo: icon
-  - train: ${algo}
-  - env: rlbench
+  - algo: icon_diffusion_transformer
+  - train: train_${algo}
+  - dataloader: default
 
-_target_: icon.workspaces.workspace.WorkSpace
+_target_: icon.workspace.Workspace
 
 task_name: ${task.name}
 algo_name: ${algo.name}
