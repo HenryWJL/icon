@@ -1,6 +1,6 @@
 seed: 42
-device: "cuda:0"
-batch_size: 128
+device: "cuda:4"
+batch_size: 64
 num_epochs: 600
 
 dataset:
@@ -17,7 +17,7 @@ val:
     _target_: icon.utils.file_utils.CheckpointManager
     save_dir: outputs/${task_name}/${algo_name}/${now:%Y-%m-%d}/${now:%H-%M-%S}/checkpoints
     val_freq: 50
-    topk: 5
+    topk: 10
     mode: "min"
     save_last: true
 

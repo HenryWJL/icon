@@ -33,7 +33,7 @@ import zarr
 import numpy as np
 from pathlib import Path
 
-dir = Path("data/open_box")
+dir = Path("data/put_rubbish_in_bin")
 # Train
 episode_lens = []
 front_images = []
