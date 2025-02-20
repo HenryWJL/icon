@@ -1,11 +1,9 @@
 name: play_jenga
-image_size: 1024
+num_cameras: 2
 cameras:
-  - "front_camera"
-  - "wrist_camera"
-proprio_dim: 14
-action_horizon: 10
-action_dim: 7
-action_shape:
-  - ${task.action_horizon}
-  - ${task.action_dim}
+  - 'front_camera'
+  - 'wrist_camera'
+shape_meta:
+  images: 256
+  low_dims: 14
+  actions: 7

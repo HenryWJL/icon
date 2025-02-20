@@ -8,17 +8,17 @@ from diffusers.schedulers.scheduling_ddpm import DDPMScheduler
 from diffusers.schedulers.scheduling_ddim import DDIMScheduler
 from timm.models.vision_transformer import Attention
 from icon.models.observation.obs_encoder import MultiModalObsEncoder
-from icon.models.diffusion.transformer import TransformerForDiffusion
+from icon.models.diffusion.unet import ConditionalUnet1D
 from icon.utils.normalizer import Normalizer
 from icon.utils.train_utils import get_optim_groups
 
 
-class DiffusionTransformerPolicy(nn.Module):
+class DiffusionUnetPolicy(nn.Module):
     
     def __init__(
         self,
         obs_encoder: MultiModalObsEncoder,
-        noise_predictor: TransformerForDiffusion,
+        noise_predictor: ConditionalUnet1D,
         noise_scheduler: Union[DDPMScheduler, DDIMScheduler],
         obs_horizon: int,
         prediction_horizon: int,
@@ -112,14 +112,10 @@ class DiffusionTransformerPolicy(nn.Module):
                 (nn.LayerNorm, nn.Embedding)
             )
         )
-        optim_groups.extend(
-            get_optim_groups(
-                self.noise_predictor,
-                noise_predictor_weight_decay,
-                (nn.Linear, nn.MultiheadAttention),
-                (nn.LayerNorm, nn.Embedding)
-            )
-        )
+        optim_groups.append({
+            'params': self.noise_predictor.parameters(),
+            'weight_decay': noise_predictor_weight_decay
+        })
         optimizer = AdamW(
             params=optim_groups,
             lr=learning_rate,

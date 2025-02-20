@@ -25,15 +25,15 @@ val:
 optimizer:
   learning_rate: 1e-4
   obs_encoder_weight_decay: 1e-6
-  noise_predictor_weight_decay: 1e-3
+  noise_predictor_weight_decay: 1e-6
   betas:
-    - 0.9
     - 0.95
+    - 0.999
   
 lr_scheduler:
   _target_: icon.utils.train_utils.get_scheduler
   name: "cosine"
-  num_warmup_steps: 1000
+  num_warmup_steps: 500
 
 ema:
   enable: true

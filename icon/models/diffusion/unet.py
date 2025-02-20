@@ -133,7 +133,7 @@ class ConditionalUnet1D(nn.Module):
                 ])
             )
         self.final_conv = nn.Sequential(
-            Conv1dBlock(down_dims[0], down_dims[0], kernel_size),
+            Conv1dBlock(down_dims[0], down_dims[0], kernel_size, n_groups),
             nn.Conv1d(down_dims[0], input_dim, 1),
         )
 
