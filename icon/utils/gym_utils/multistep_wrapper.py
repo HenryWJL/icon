@@ -4,8 +4,10 @@ import numpy as np
 from collections import defaultdict, deque
 import dill
 
+
 def stack_repeated(x, n):
     return np.repeat(np.expand_dims(x,axis=0),n,axis=0)
+
 
 def repeated_box(box_space, n):
     return spaces.Box(
@@ -14,6 +16,7 @@ def repeated_box(box_space, n):
         shape=(n,) + box_space.shape,
         dtype=box_space.dtype
     )
+
 
 def repeated_space(space, n):
     if isinstance(space, spaces.Box):
@@ -26,16 +29,19 @@ def repeated_space(space, n):
     else:
         raise RuntimeError(f'Unsupported space type {type(space)}')
 
+
 def take_last_n(x, n):
     x = list(x)
     n = min(len(x), n)
     return np.array(x[-n:])
+
 
 def dict_take_last_n(x, n):
     result = dict()
     for key, value in x.items():
         result[key] = take_last_n(value, n)
     return result
+
 
 def aggregate(data, method='max'):
     if method == 'max':
@@ -50,6 +56,7 @@ def aggregate(data, method='max'):
         return np.sum(data)
     else:
         raise NotImplementedError()
+
 
 def stack_last_n_obs(all_obs, n_steps):
     assert(len(all_obs) > 0)

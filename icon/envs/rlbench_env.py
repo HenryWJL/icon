@@ -10,6 +10,7 @@ from rlbench.action_modes.gripper_action_modes import Discrete
 from rlbench.action_modes.arm_action_modes import JointPosition, JointVelocity, EndEffectorPoseViaIK
 from rlbench.action_modes.action_mode import MoveArmThenGripper
 from rlbench.utils import name_to_task_class
+from scipy.spatial.transform import Rotation as R
 from typing import Dict, Optional, Union, Tuple, List, Literal
 
 
@@ -24,7 +25,7 @@ def name_to_action_mode(name: str):
     elif name.endswith("ee_pose"):
         return EndEffectorPoseViaIK(absolute_mode)
 
-
+# Adapted from https://github.com/stepjam/RLBench/blob/master/rlbench/gym.py
 class RLBenchEnv(gym.Env):
     metadata = {
         "cameras": [
@@ -83,6 +84,7 @@ class RLBenchEnv(gym.Env):
         }
         obs_config = ObservationConfig(**camera_cfgs, **camera_del_cfgs)
         
+        self.action_mode = action_mode
         action_mode = MoveArmThenGripper(
             arm_action_mode=name_to_action_mode(action_mode),
             gripper_action_mode=Discrete()
@@ -121,21 +123,21 @@ class RLBenchEnv(gym.Env):
                 )
             else:
                 self.observation_space[key] = spaces.Box(
-                    low=0 if str(value.dtype).startswith("uint") else -np.inf,
-                    high=1 if str(value.dtype).startswith("uint") else -np.inf,
+                    low=-np.inf,
+                    high=np.inf,
                     shape=value.shape,
-                    dtype=value.dtype
+                    dtype=np.float32
                 )
         self.observation_space = spaces.Dict(self.observation_space)
-
+        
+        # We use euler angles instead of quaternions to represent rotations
+        action_shape = (7,) if self.action_mode.endswith("ee_pose") else self.rlbench_env.action_shape
         self.action_space = spaces.Box(
             low=-np.inf,
             high=np.inf,
-            shape=self.rlbench_env.action_shape,
+            shape=action_shape,
             dtype=np.float32
         )
-
-        self._seed = None
 
     def _extract_obs(self, rlbench_obs) -> Dict:
         gym_obs = {} 
@@ -157,18 +159,22 @@ class RLBenchEnv(gym.Env):
             frame = np.clip((frame * 255.).astype(np.uint8), 0, 255)
             return frame
 
-    def reset(self, seed: Union[int, None] = None, options: Union[Dict, None] = None) -> Tuple:
-        super().reset(seed=seed)
+    def reset(self, seed: Union[int, None] = None, **kwargs) -> Dict:
+        super().reset(seed=seed, **kwargs)
         np.random.seed(seed=seed)
         _, obs = self.rlbench_task_env.reset()
         obs = self._extract_obs(obs)
         return obs
 
     def step(self, action: np.ndarray) -> Tuple:
+        if self.action_mode.endswith("ee_pose"):
+            translation = action[:3]
+            rotation = R.from_euler('xyz', action[3: 6]).as_quat()
+            gripper_state = action[6][np.newaxis]
+            action = np.concatenate([translation, rotation, gripper_state])
         obs, reward, done = self.rlbench_task_env.step(action)
         obs = self._extract_obs(obs)
-        return obs, reward, done, None
+        return obs, reward, done, {}
 
     def close(self) -> None:
         self.rlbench_env.shutdown()
-        

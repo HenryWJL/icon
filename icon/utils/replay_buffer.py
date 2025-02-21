@@ -1,5 +1,14 @@
 """
-Copied from https://github.com/real-stanford/diffusion_policy/blob/main/diffusion_policy/common/replay_buffer.py
+MIT License
+
+Copyright (c) 2023 Columbia Artificial Intelligence and Robotics Lab
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 """
 from typing import Union, Dict, Optional
 import os
@@ -10,11 +19,13 @@ import numcodecs
 import numpy as np
 from functools import cached_property
 
+
 def check_chunks_compatible(chunks: tuple, shape: tuple):
     assert len(shape) == len(chunks)
     for c in chunks:
         assert isinstance(c, numbers.Integral)
         assert c > 0
+
 
 def rechunk_recompress_array(group, name, 
         chunks=None, chunk_length=None,
@@ -47,6 +58,7 @@ def rechunk_recompress_array(group, name,
     del group[tmp_key]
     arr = group[name]
     return arr
+
 
 def get_optimal_chunks(shape, dtype, 
         target_chunk_bytes=2e6, 
