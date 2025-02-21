@@ -15,7 +15,7 @@ OmegaConf.register_new_resolver("eval", eval, replace=True)
 @click.option("-is", "--image_size", type=int, default=256, help="RGB image size.")
 @click.option("-d", "--device", type=str, default="cuda", help="Device type.")
 @click.option("-nt", "--num_trials", type=int, default=5, help="Number of trials.")
-@click.option("-rd", "--render_mode", type=str, default="rgb_array", help="Rendering mode.")
+@click.option("-rm", "--render_mode", type=str, default="rgb_array", help="Rendering mode.")
 def main(task, algo, checkpoint, image_size, device, num_trials, render_mode):
     with hydra.initialize_config_dir(
         config_dir=str(Path(__file__).parent.parent.joinpath("icon/configs")),

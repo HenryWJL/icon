@@ -28,19 +28,20 @@ class EnvRunner:
             video_save_dir = str2path(video_save_dir)
     
         self.env = MultiStepWrapper(
-            VideoRecordingWrapper(
-                env=env,
-                video_recoder=VideoRecorder.create_h264(
-                    fps=fps,
-                    codec='h264',
-                    input_pix_fmt='rgb24',
-                    crf=22,
-                    thread_type='FRAME',
-                    thread_count=1
-                ),
-                file_path="video.mp4",
-                steps_per_render=max(10 // fps, 1)
-            ),
+            env=env,
+            # VideoRecordingWrapper(
+            #     env=env,
+            #     video_recoder=VideoRecorder.create_h264(
+            #         fps=fps,
+            #         codec='h264',
+            #         input_pix_fmt='rgb24',
+            #         crf=22,
+            #         thread_type='FRAME',
+            #         thread_count=1
+            #     ),
+            #     file_path="video.mp4",
+            #     steps_per_render=max(10 // fps, 1)
+            # ),
             n_obs_steps=obs_horizon,
             n_action_steps=action_horizon,
             max_episode_steps=max_episode_steps
