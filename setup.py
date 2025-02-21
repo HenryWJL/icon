@@ -32,7 +32,9 @@ setup(
         "omegaconf>=2.3.0",
         "einops>=0.8.0",
         "wandb>=0.16.3",
-        "numba>=0.61.0"
+        "numba>=0.61.0",
+        "gymnasium>=1.0.0",
+        "dill>=0.3.9",
         "rlbench @ git+https://github.com/stepjam/RLBench.git",
         "robosuite @ git+https://github.com/ARISE-Initiative/robosuite.git",
     ]

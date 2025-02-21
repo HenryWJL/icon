@@ -29,65 +29,85 @@
 
 
 
-import zarr
-import numpy as np
-from pathlib import Path
+# import zarr
+# import numpy as np
+# from pathlib import Path
 
-dir = Path("data/open_box")
-# Train
-episode_lens = []
-front_images = []
-wrist_images = []
-front_masks = []
-low_dims = []
-actions = []
-for episode in list(dir.joinpath("train").glob("*.zarr")):
-    with zarr.open(str(episode), 'r') as f:
-        front_images.append(f['/images/front_camera'][()])
-        wrist_images.append(f['/images/wrist_camera'][()])
-        front_masks.append(f['/masks/front_camera'][()])
-        low_dims.append(f['/proprios'][()])
-        actions.append(f['/actions'][()])
-        episode_len = f['/actions'][()].shape[0]
-        episode_lens.append(episode_len)
+# dir = Path("data/open_box")
+# # Train
+# episode_lens = []
+# front_images = []
+# wrist_images = []
+# front_masks = []
+# low_dims = []
+# actions = []
+# for episode in list(dir.joinpath("train").glob("*.zarr")):
+#     with zarr.open(str(episode), 'r') as f:
+#         front_images.append(f['/images/front_camera'][()])
+#         wrist_images.append(f['/images/wrist_camera'][()])
+#         front_masks.append(f['/masks/front_camera'][()])
+#         low_dims.append(f['/proprios'][()])
+#         actions.append(f['/actions'][()])
+#         episode_len = f['/actions'][()].shape[0]
+#         episode_lens.append(episode_len)
 
-front_images = np.concatenate(front_images)
-wrist_images = np.concatenate(wrist_images)
-front_masks = np.concatenate(front_masks)
-low_dims = np.concatenate(low_dims)
-actions = np.concatenate(actions)    
-cumulative_episode_lens = np.cumsum(episode_lens)
-with zarr.open(str(dir).replace("data", "data_copy") + "/train_data.zarr", 'w') as f:
-    f['/data/low_dims'] = low_dims
-    f['/data/actions'] = actions
-    f['/data/front_camera_images'] = front_images
-    f['/data/wrist_camera_images'] = wrist_images
-    f['/data/front_camera_masks'] = front_masks
-    f['/meta/episode_ends'] = cumulative_episode_lens
+# front_images = np.concatenate(front_images)
+# wrist_images = np.concatenate(wrist_images)
+# front_masks = np.concatenate(front_masks)
+# low_dims = np.concatenate(low_dims)
+# actions = np.concatenate(actions)    
+# cumulative_episode_lens = np.cumsum(episode_lens)
+# with zarr.open(str(dir).replace("data", "data_copy") + "/train_data.zarr", 'w') as f:
+#     f['/data/low_dims'] = low_dims
+#     f['/data/actions'] = actions
+#     f['/data/front_camera_images'] = front_images
+#     f['/data/wrist_camera_images'] = wrist_images
+#     f['/data/front_camera_masks'] = front_masks
+#     f['/meta/episode_ends'] = cumulative_episode_lens
 
-### Val
-episode_lens = []
-front_images = []
-wrist_images = []
-low_dims = []
-actions = []
-for episode in list(dir.joinpath("val").glob("*.zarr")):
-    with zarr.open(str(episode), 'r') as f:
-        front_images.append(f['/images/front_camera'][()])
-        wrist_images.append(f['/images/wrist_camera'][()])
-        low_dims.append(f['/proprios'][()])
-        actions.append(f['/actions'][()])
-        episode_len = f['/actions'][()].shape[0]
-        episode_lens.append(episode_len)
+# ### Val
+# episode_lens = []
+# front_images = []
+# wrist_images = []
+# low_dims = []
+# actions = []
+# for episode in list(dir.joinpath("val").glob("*.zarr")):
+#     with zarr.open(str(episode), 'r') as f:
+#         front_images.append(f['/images/front_camera'][()])
+#         wrist_images.append(f['/images/wrist_camera'][()])
+#         low_dims.append(f['/proprios'][()])
+#         actions.append(f['/actions'][()])
+#         episode_len = f['/actions'][()].shape[0]
+#         episode_lens.append(episode_len)
 
-front_images = np.concatenate(front_images)
-wrist_images = np.concatenate(wrist_images)
-low_dims = np.concatenate(low_dims)
-actions = np.concatenate(actions)    
-cumulative_episode_lens = np.cumsum(episode_lens)
-with zarr.open(str(dir).replace("data", "data_copy") + "/val_data.zarr", 'w') as f:
-    f['/data/low_dims'] = low_dims
-    f['/data/actions'] = actions
-    f['/data/front_camera_images'] = front_images
-    f['/data/wrist_camera_images'] = wrist_images
-    f['/meta/episode_ends'] = cumulative_episode_lens
+# front_images = np.concatenate(front_images)
+# wrist_images = np.concatenate(wrist_images)
+# low_dims = np.concatenate(low_dims)
+# actions = np.concatenate(actions)    
+# cumulative_episode_lens = np.cumsum(episode_lens)
+# with zarr.open(str(dir).replace("data", "data_copy") + "/val_data.zarr", 'w') as f:
+#     f['/data/low_dims'] = low_dims
+#     f['/data/actions'] = actions
+#     f['/data/front_camera_images'] = front_images
+#     f['/data/wrist_camera_images'] = wrist_images
+#     f['/meta/episode_ends'] = cumulative_episode_lens
+
+
+
+from icon.envs.rlbench_env import RLBenchEnv
+from icon.utils.gym_utils.multistep_wrapper import MultiStepWrapper
+
+env = RLBenchEnv(task="close_drawer", cameras=['front_camera'], render_mode='human')
+env = MultiStepWrapper(env, 2, 8)
+obs = env.reset()
+print(obs['front_rgb'].shape)
+training_steps = 40
+episode_length = 40
+for i in range(training_steps):
+    if i % episode_length == 0:
+        print('Reset Episode')
+        obs = env.reset()
+    obs, reward, terminate, _ = env.step(env.action_space.sample())
+    env.render()  # Note: rendering increases step time.
+
+print('Done')
