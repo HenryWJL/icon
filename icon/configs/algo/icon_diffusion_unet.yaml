@@ -5,7 +5,7 @@ action_horizon: 8
 prediction_horizon: 16
 
 policy:
-  _target_: icon.policies.diffusion_unet_policy.DiffusionUnetPolicy
+  _target_: icon.policies.diffusion_unet_policy.IConDiffusionUnetPolicy
 
   obs_encoder:
     _target_: icon.models.observation.obs_encoder.MultiModalObsEncoder
@@ -27,6 +27,7 @@ policy:
         gamma: 0.1
         
       cameras: ${task.cameras}
+      resize_shape: ${task.shape_meta.images}
       crop_shape: ${..image_encoder.backbone.img_size}
       
     low_dim_shape: ${task.shape_meta.low_dims}

@@ -7,3 +7,20 @@ shape_meta:
   images: 256
   low_dims: 14
   actions: 7
+env_runner:
+  _target_: icon.env_runners.rlbench_runner.RLBenchRunner
+  env: 
+    _target_: icon.envs.rlbench_env.RLBenchEnv
+    task: ${task_name}
+    image_size: 256
+    robot: "panda"
+    action_mode: "delta_ee_pose"
+    render_mode: "rgb_array"
+    
+  obs_horizon: ${algo.obs_horizon}
+  action_horizon: ${algo.action_horizon}
+  cameras: ${task.cameras}
+  max_episode_steps: 50
+  num_trials: 5
+  fps: 10
+  video_save_dir: videos/${task_name}/${algo_name}

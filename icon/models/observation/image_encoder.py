@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch import Tensor
 from typing import Union, Dict, Tuple, List
 from timm.models.vision_transformer import VisionTransformer
-from torchvision.transforms import RandomCrop, CenterCrop
+from torchvision.transforms import Resize, RandomCrop, CenterCrop
 from copy import deepcopy
 from einops import rearrange
 from icon.utils.sampler import random_sample, farthest_point_sample
@@ -126,6 +126,7 @@ class MultiViewImageEncoder(nn.Module):
         self,
         backbone: ViT,
         cameras: List,
+        resize_shape: Union[int, None] = None,
         crop_shape: Union[int, None] = None
     ) -> None:
         """
@@ -137,6 +138,9 @@ class MultiViewImageEncoder(nn.Module):
         self.backbones = nn.ModuleDict({
             camera: deepcopy(backbone) for camera in cameras
         })
+        self.resize = nn.Identity()
+        if resize_shape is not None:
+            self.resize = Resize(resize_shape)
         self.crop = nn.Identity()
         if crop_shape is not None:
             self.crop = RandomCrop((crop_shape, crop_shape)) if self.training \
@@ -158,12 +162,14 @@ class MultiViewImageEncoder(nn.Module):
                     mask = rearrange(mask, 'b l ... -> (b l) ...')
             # Crop images and masks in the same way. This is done by 
             if mask is None:
+                image = self.resize(image)
                 image = self.crop(image)
                 inputs = [image]
             else:
                 mask = mask.unsqueeze(1).repeat(1, 3, 1, 1)
                 image_mask_stack = torch.stack([image, mask])
                 image_mask_stack = rearrange(image_mask_stack, 't n ... -> (t n) ...')
+                image_mask_stack = self.resize(image_mask_stack)
                 image_mask_stack = self.crop(image_mask_stack)
                 image, mask = rearrange(image_mask_stack, '(t n) ... -> t n ...', t=2).chunk(2)
                 image, mask = image.squeeze(0), (mask.squeeze(0)[:, 0] > 0.5).float()

@@ -21,6 +21,7 @@ policy:
         num_heads: 6
         
       cameras: ${task.cameras}
+      resize_shape: ${task.shape_meta.images}
       crop_shape: ${..image_encoder.backbone.img_size}
       
     low_dim_shape: ${task.shape_meta.low_dims}

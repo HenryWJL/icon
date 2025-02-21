@@ -6,9 +6,11 @@ from tqdm import tqdm
 from pathlib import Path
 from copy import deepcopy
 from omegaconf import OmegaConf
+from torch.utils.data import Dataset, DataLoader
+from icon.policies.base_policy import BasePolicy
 from icon.utils.pytorch_utils import to
-from icon.utils.train_utils import set_seed
-from icon.utils.file_utils import create_logger
+from icon.utils.train_utils import set_seed, EMA
+from icon.utils.file_utils import create_logger, CheckpointManager
 
 
 class Workspace:
@@ -21,28 +23,28 @@ class Workspace:
         # Checkpoint Manager
         self.enable_val = cfg.train.val.enable
         if self.enable_val:
-            self.ckpt_manager = hydra.utils.instantiate(cfg.train.val.ckpt_manager)
+            self.ckpt_manager: CheckpointManager = hydra.utils.instantiate(cfg.train.val.ckpt_manager)
             self.val_freq = self.ckpt_manager.val_freq
         # Policy
-        self.policy = hydra.utils.instantiate(cfg.algo.policy)
+        self.policy: BasePolicy = hydra.utils.instantiate(cfg.algo.policy)
         self.policy.to(self.device)
         # Dataloader
-        train_dataset = hydra.utils.instantiate(
+        train_dataset: Dataset = hydra.utils.instantiate(
             cfg.train.dataset,
             zarr_path=f"data/{cfg.task_name}/train_data.zarr"
         )
         normalizer = train_dataset.get_normalizer()
-        self.train_dataloader = hydra.utils.instantiate(
+        self.train_dataloader: DataLoader = hydra.utils.instantiate(
             cfg.dataloader.train,
             dataset=train_dataset
         )
         if self.enable_val:
-            val_dataset = hydra.utils.instantiate(
+            val_dataset: Dataset = hydra.utils.instantiate(
                 cfg.train.dataset,
                 zarr_path=f"data/{cfg.task_name}/val_data.zarr",
                 image_mask_keys=list()
             )
-            self.val_dataloader = hydra.utils.instantiate(
+            self.val_dataloader: DataLoader = hydra.utils.instantiate(
                 cfg.dataloader.val,
                 dataset=val_dataset
             )
@@ -62,7 +64,7 @@ class Workspace:
         self.enable_ema = cfg.train.ema.enable
         if self.enable_ema:
             self.ema_policy = deepcopy(self.policy)
-            self.ema = hydra.utils.instantiate(
+            self.ema: EMA = hydra.utils.instantiate(
                 cfg.train.ema.runner,
                 model=self.ema_policy
             )

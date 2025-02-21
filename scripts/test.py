@@ -97,7 +97,7 @@ import numpy as np
 from icon.envs.rlbench_env import RLBenchEnv
 from icon.utils.gym_utils.multistep_wrapper import MultiStepWrapper
 
-env = RLBenchEnv(task="close_drawer", cameras=['front_camera'], render_mode='human')
+env = RLBenchEnv(task="close_drawer", render_mode='human')
 env = MultiStepWrapper(env, 2, 8)
 obs = env.reset()
 training_steps = 6

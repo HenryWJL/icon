@@ -1,3 +1,4 @@
+import copy
 import numpy as np
 import gymnasium as gym
 from gymnasium import spaces
@@ -11,7 +12,7 @@ from rlbench.action_modes.arm_action_modes import JointPosition, JointVelocity, 
 from rlbench.action_modes.action_mode import MoveArmThenGripper
 from rlbench.utils import name_to_task_class
 from scipy.spatial.transform import Rotation as R
-from typing import Dict, Optional, Union, Tuple, List, Literal
+from typing import Dict, Optional, Union, Tuple, Literal
 
 
 def name_to_action_mode(name: str):
@@ -28,15 +29,8 @@ def name_to_action_mode(name: str):
 # Adapted from https://github.com/stepjam/RLBench/blob/master/rlbench/gym.py
 class RLBenchEnv(gym.Env):
     metadata = {
-        "cameras": [
-            'left_shoulder_camera',
-            'right_shoulder_camera',
-            'overhead_camera',
-            'wrist_camera',
-            'front_camera'
-        ],
-        "robots": ['panda', 'jaco', 'mico', 'sawyer', 'ur5'],
-        "action_modes": [
+        'robots': ['panda', 'jaco', 'mico', 'sawyer', 'ur5'],
+        'action_modes': [
             'joint_pos',
             'joint_vel',
             'ee_pose',
@@ -44,46 +38,36 @@ class RLBenchEnv(gym.Env):
             'delta_joint_vel',
             'delta_ee_pose'
         ],
-        "render_modes": ["human", "rgb_array"],
-        "render_fps": 4
+        'render_modes': ['human', 'rgb_array']
     }
 
     def __init__(
         self, 
         task: str,
-        cameras: List,
         image_size: Optional[int] = 224,
         robot: Literal['panda', 'jaco', 'mico', 'sawyer', 'ur5'] = 'panda',
         action_mode: Literal['joint_pos', 'joint_vel', 'ee_pose', 'delta_joint_pos', 'delta_joint_vel', 'delta_ee_pose'] = 'delta_ee_pose',
         render_mode: Literal['human', 'rgb_array', None] = None,
     ) -> None:
-        assert all(camera in self.metadata['cameras'] for camera in cameras)
         assert robot in self.metadata['robots']
         assert action_mode in self.metadata['action_modes']
-        # During rollout, we only launch the cameras we need
-        self.cameras = cameras
-        cameras_del = list(set(self.metadata['cameras']) - set(cameras))
-        camera_cfgs = {
-            camera: CameraConfig(
-                rgb=True,
-                depth=False,
-                point_cloud=False,
-                mask=False,
-                image_size=(image_size, image_size)
-            )
-            for camera in cameras
-        }
-        camera_del_cfgs = {
-            camera: CameraConfig(
-                rgb=False,
-                depth=False,
-                point_cloud=False,
-                mask=False
-            )
-            for camera in cameras_del
-        }
-        obs_config = ObservationConfig(**camera_cfgs, **camera_del_cfgs)
-        
+
+        camera_config = CameraConfig(
+            rgb=True,
+            depth=False,
+            point_cloud=False,
+            mask=False,
+            image_size=(image_size, image_size)
+        )
+        obs_config = ObservationConfig(
+            left_shoulder_camera=copy.copy(camera_config),
+            right_shoulder_camera=copy.copy(camera_config),
+            overhead_camera=copy.copy(camera_config),
+            wrist_camera=copy.copy(camera_config),
+            front_camera=copy.copy(camera_config)
+        )
+        obs_config.set_all(True)
+
         self.action_mode = action_mode
         action_mode = MoveArmThenGripper(
             arm_action_mode=name_to_action_mode(action_mode),
@@ -139,7 +123,7 @@ class RLBenchEnv(gym.Env):
             dtype=np.float32
         )
 
-    def _extract_obs(self, rlbench_obs) -> Dict:
+    def _extract_obs(self, rlbench_obs):
         gym_obs = {} 
         for state_name in ["joint_velocities", "joint_positions", "joint_forces", "gripper_open", "gripper_pose", "gripper_joint_positions", "gripper_touch_forces", "task_low_dim_state"]:
             state_data = getattr(rlbench_obs, state_name)
@@ -148,8 +132,13 @@ class RLBenchEnv(gym.Env):
                 if np.isscalar(state_data):
                     state_data = np.asarray([state_data])
                 gym_obs[state_name] = state_data
+                
         gym_obs.update({
-            camera.replace('camera', 'rgb'): getattr(rlbench_obs, camera.replace('camera', 'rgb')) for camera in self.cameras
+            "left_shoulder_rgb": rlbench_obs.left_shoulder_rgb,
+            "right_shoulder_rgb": rlbench_obs.right_shoulder_rgb,
+            "wrist_rgb": rlbench_obs.wrist_rgb,
+            "front_rgb": rlbench_obs.front_rgb,
+            "overhead_rgb": rlbench_obs.overhead_rgb
         })
         return gym_obs
 
@@ -163,8 +152,7 @@ class RLBenchEnv(gym.Env):
         super().reset(seed=seed, **kwargs)
         np.random.seed(seed=seed)
         _, obs = self.rlbench_task_env.reset()
-        obs = self._extract_obs(obs)
-        return obs
+        return self._extract_obs(obs)
 
     def step(self, action: np.ndarray) -> Tuple:
         if self.action_mode.endswith("ee_pose"):
@@ -172,9 +160,8 @@ class RLBenchEnv(gym.Env):
             rotation = R.from_euler('xyz', action[3: 6]).as_quat()
             gripper_state = action[6][np.newaxis]
             action = np.concatenate([translation, rotation, gripper_state])
-        obs, reward, done = self.rlbench_task_env.step(action)
-        obs = self._extract_obs(obs)
-        return obs, reward, done, {}
+        obs, reward, terminated = self.rlbench_task_env.step(action)
+        return self._extract_obs(obs), reward, terminated, {}
 
     def close(self) -> None:
         self.rlbench_env.shutdown()
