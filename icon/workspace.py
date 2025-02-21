@@ -99,7 +99,7 @@ class Workspace:
             train_losses_mean = dict()
             for k, v in train_losses.items():
                 if len(v) > 0:
-                    train_losses_mean[k] = round(torch.tensor(v).mean().item(), 4)
+                    train_losses_mean[k] = round(torch.tensor(v).mean().item(), 5)
             self.logger.info(f"Epoch [{epoch + 1}/{self.num_epochs}], training losses: {train_losses_mean}")
             if self.enable_wandb:
                 wandb.log(train_losses_mean)
@@ -120,10 +120,10 @@ class Workspace:
 
                     if len(val_loss) > 0:
                         val_loss = torch.tensor(val_loss).mean().item()
-                        self.logger.info(f"Epoch [{epoch + 1}/{self.num_epochs}], validation loss: {round(val_loss, 4)}")
+                        self.logger.info(f"Epoch [{epoch + 1}/{self.num_epochs}], validation loss: {round(val_loss, 5)}")
                         if self.enable_wandb:
                             wandb.log({'val_loss': val_loss})
-                        self.ckpt_manager.update(val_loss, policy.state_dict())
+                        self.ckpt_manager.update(val_loss, policy.state_dicts())
 
         if self.enable_val:
             self.ckpt_manager.save_topk()

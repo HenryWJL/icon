@@ -122,3 +122,14 @@ class DiffusionUnetPolicy(nn.Module):
             betas=betas
         )
         return optimizer
+    
+    def state_dicts(self) -> Dict:
+        state_dicts = dict(
+            policy=self.state_dict(),
+            normalizer=self.normalizer
+        )
+        return state_dicts
+
+    def load_state_dicts(self, state_dicts: Dict) -> None:
+        self.load_state_dict(state_dicts['policy'])
+        self.normalizer = state_dicts['normalizer']

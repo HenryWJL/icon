@@ -115,6 +115,9 @@ from icon.envs.base import Env
 from icon.policies.icon_diffusion_transformer_policy import DiffusionPolicy
 from icon.utils.file_utils import str2path
 from icon.utils.pytorch_utils import to
+from omegaconf import OmegaConf
+
+OmegaConf.register_new_resolver("eval", eval, replace=True)
 
 
 @click.command(help="Evaluate policies in simulation.")

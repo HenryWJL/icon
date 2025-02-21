@@ -95,7 +95,7 @@ class CheckpointManager:
                     metrics.append(last_metric)
                     state_dicts.append(last_state_dict)
                 for epoch, metric, state_dict in zip(epochs, metrics, state_dicts):
-                    torch.save(state_dict, str(self.save_dir.joinpath(f"{epoch}_{round(metric, 3)}.pth")))
+                    torch.save(state_dict, str(self.save_dir.joinpath(f"{epoch}_{round(metric, 5)}.pth")))
         
     def clear(self) -> None:
         self.global_step = 1
