@@ -148,8 +148,8 @@ class RLBenchEnv(gym.Env):
             frame = np.clip((frame * 255.).astype(np.uint8), 0, 255)
             return frame
 
-    def reset(self, seed: Union[int, None] = None, **kwargs) -> Dict:
-        super().reset(seed=seed, **kwargs)
+    def reset(self, seed: Union[int, None] = None, options: Union[Dict, None] = None) -> Dict:
+        super().reset(seed=seed, options=options)
         np.random.seed(seed=seed)
         _, obs = self.rlbench_task_env.reset()
         return self._extract_obs(obs)

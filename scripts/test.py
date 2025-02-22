@@ -91,24 +91,3 @@
 #     f['/data/front_camera_images'] = front_images
 #     f['/data/wrist_camera_images'] = wrist_images
 #     f['/meta/episode_ends'] = cumulative_episode_lens
-
-
-import numpy as np
-from icon.envs.rlbench_env import RLBenchEnv
-from icon.utils.gym_utils.multistep_wrapper import MultiStepWrapper
-
-env = RLBenchEnv(task="close_drawer", render_mode='human')
-env = MultiStepWrapper(env, 2, 8)
-obs = env.reset()
-training_steps = 6
-episode_length = 5
-for i in range(training_steps):
-    if (i + 1) % episode_length == 0:
-        print('Reset Episode')
-        obs = env.reset()
-
-    action = np.clip(env.action_space.sample(), -0.005, 0.005)
-    obs, reward, terminate, _ = env.step(action)
-    env.render()  # Note: rendering increases step time.
-
-print('Done')

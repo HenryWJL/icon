@@ -1,8 +1,20 @@
+"""
+MIT License
+
+Copyright (c) 2023 Columbia Artificial Intelligence and Robotics Lab
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+"""
+import numpy as np
 import gymnasium as gym
 from gymnasium import spaces
-import numpy as np
+from typing import Optional, Union, Literal, Dict, Tuple, List, Any
 from collections import defaultdict, deque
-import dill
 
 
 def stack_repeated(x, n):
@@ -70,69 +82,95 @@ def stack_last_n_obs(all_obs, n_steps):
         result[:start_idx] = result[start_idx]
     return result
 
-
+# Adapted from https://github.com/real-stanford/diffusion_policy/blob/main/diffusion_policy/gym_util/multistep_wrapper.py#L67
 class MultiStepWrapper(gym.Wrapper):
-    def __init__(self, 
-            env, 
-            n_obs_steps, 
-            n_action_steps, 
-            max_episode_steps=None,
-            reward_agg_method='max'
-        ):
+
+    def __init__(
+        self,     
+        env: gym.Env, 
+        obs_horizon: int, 
+        action_horizon: int, 
+        max_episode_steps: Union[int, None] = None,
+        reward_agg_method: Literal['max', 'min', 'mean', 'sum'] = 'max',
+        enable_temporal_ensemble: Optional[bool] = True
+    ) -> None:
         super().__init__(env)
-        self._action_space = repeated_space(env.action_space, n_action_steps)
-        self._observation_space = repeated_space(env.observation_space, n_obs_steps)
+        self._action_space = repeated_space(env.action_space, action_horizon)
+        self._observation_space = repeated_space(env.observation_space, obs_horizon)
+        self.obs = deque(maxlen=obs_horizon + 1)
+        if enable_temporal_ensemble:
+            assert max_episode_steps is not None
+            T = max_episode_steps
+            H = action_horizon
+            D = int(env.action_space.shape[0])
+            self.all_time_actions = np.zeros((T, T + H, D), dtype=np.float32)
+        self.reward = list()
+        self.done = list()
+        self.info = defaultdict(lambda : deque(maxlen=obs_horizon + 1))
+        self.global_step = 0
+        self.obs_horizon = obs_horizon
+        self.action_horizon = action_horizon
         self.max_episode_steps = max_episode_steps
-        self.n_obs_steps = n_obs_steps
-        self.n_action_steps = n_action_steps
         self.reward_agg_method = reward_agg_method
-        self.n_obs_steps = n_obs_steps
+        self.enable_temporal_ensemble = enable_temporal_ensemble
 
-        self.obs = deque(maxlen=n_obs_steps+1)
+    def reset(self, seed: Union[int, None] = None, options: Union[Dict, None] = None):
+        obs = super().reset(seed=seed, options=options)
+        self.obs = deque([obs], maxlen=self.obs_horizon + 1)
+        if self.enable_temporal_ensemble:
+            self.all_time_actions = np.zeros_like(self.all_time_actions, dtype=np.float32)
         self.reward = list()
         self.done = list()
-        self.info = defaultdict(lambda : deque(maxlen=n_obs_steps+1))
-    
-    def reset(self):
-        """Resets the environment using kwargs."""
-        obs = super().reset()
-
-        self.obs = deque([obs], maxlen=self.n_obs_steps+1)
-        self.reward = list()
-        self.done = list()
-        self.info = defaultdict(lambda : deque(maxlen=self.n_obs_steps+1))
-
-        obs = self._get_obs(self.n_obs_steps)
+        self.info = defaultdict(lambda : deque(maxlen=self.obs_horizon + 1))
+        self.global_step = 0
+        obs = self._get_obs(self.obs_horizon)
         return obs
 
-    def step(self, action):
+    def step(self, actions: np.ndarray) -> Tuple:
         """
-        actions: (n_action_steps,) + action_shape
+        Args:
+            actions (np.ndarray): (action_horizon, action_shape).
         """
-        for act in action:
-            if len(self.done) > 0 and self.done[-1]:
-                # termination
-                break
-            observation, reward, done, info = super().step(act)
-
-            self.obs.append(observation)
+        if self.enable_temporal_ensemble:
+            t = self.global_step
+            H = self.action_horizon
+            self.all_time_actions[[t], t: t + H] = actions
+            current_actions = self.all_time_actions[:, t]
+            actions_populated = np.all(current_actions != 0, axis=1)
+            current_actions = current_actions[actions_populated]
+            exp_weights = np.exp(-0.01 * np.arange(len(current_actions)))
+            exp_weights = (exp_weights / exp_weights.sum())[..., np.newaxis]
+            action = (current_actions * exp_weights).sum(axis=0)
+            obs, reward, done, info = super().step(action)
+            self.obs.append(obs)
             self.reward.append(reward)
-            if (self.max_episode_steps is not None) \
-                and (len(self.reward) >= self.max_episode_steps):
-                # truncation
+            if len(self.reward) >= self.max_episode_steps:
                 done = True
             self.done.append(done)
             self._add_info(info)
+            self.global_step += 1
+        else:
+            for action in actions:
+                if len(self.done) > 0 and self.done[-1]:
+                    break
+                obs, reward, done, info = super().step(action)
+                self.obs.append(obs)
+                self.reward.append(reward)
+                if (self.max_episode_steps is not None) and (len(self.reward) >= self.max_episode_steps):
+                    done = True
+                self.done.append(done)
+                self._add_info(info)
 
-        observation = self._get_obs(self.n_obs_steps)
+        obs = self._get_obs(self.obs_horizon)
         reward = aggregate(self.reward, self.reward_agg_method)
         done = aggregate(self.done, 'max')
-        info = dict_take_last_n(self.info, self.n_obs_steps)
-        return observation, reward, done, info
+        info = dict_take_last_n(self.info, self.obs_horizon)
+        return obs, reward, done, info
 
-    def _get_obs(self, n_steps=1):
+    def _get_obs(self, n_steps: Optional[int] = 1) -> Dict:
         """
-        Output (n_steps,) + obs_shape
+        Returns:
+            obs (dict): each element with shape (obs_horizon, ...).
         """
         assert(len(self.obs) > 0)
         if isinstance(self.observation_space, spaces.Box):
@@ -148,21 +186,17 @@ class MultiStepWrapper(gym.Wrapper):
         else:
             raise RuntimeError('Unsupported space type')
 
-    def _add_info(self, info):
+    def _add_info(self, info: Dict) -> None:
         for key, value in info.items():
             self.info[key].append(value)
     
-    def get_rewards(self):
+    def get_rewards(self) -> List:
         return self.reward
     
-    def get_attr(self, name):
+    def get_attr(self, name: str) -> Any:
         return getattr(self, name)
-
-    def run_dill_function(self, dill_fn):
-        fn = dill.loads(dill_fn)
-        return fn(self)
     
-    def get_infos(self):
+    def get_infos(self) -> Dict:
         result = dict()
         for k, v in self.info.items():
             result[k] = list(v)

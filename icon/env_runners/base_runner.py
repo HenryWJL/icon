@@ -19,7 +19,7 @@ class EnvRunner:
         cameras: List,
         max_episode_steps: Optional[int] = 200,
         num_trials: Optional[int] = 50,
-        fps: Optional[int] = 10,
+        initial_seed: Optional[int] = 10000,
         video_save_dir: Union[str, None] = None
     ) -> None:
         if video_save_dir is None:
@@ -42,14 +42,16 @@ class EnvRunner:
             #     file_path="video.mp4",
             #     steps_per_render=max(10 // fps, 1)
             # ),
-            n_obs_steps=obs_horizon,
-            n_action_steps=action_horizon,
-            max_episode_steps=max_episode_steps
+            obs_horizon=obs_horizon,
+            action_horizon=action_horizon,
+            max_episode_steps=max_episode_steps,
+            enable_temporal_ensemble=True
         )
         
         self.cameras = cameras
         self.max_episode_steps = max_episode_steps
         self.num_trials = num_trials
+        self.initial_seed = initial_seed
     
     def _process_obs(self, obs: Dict) -> Dict:
         """
@@ -60,7 +62,8 @@ class EnvRunner:
     
     def run(self, policy, device: torch.device) -> None:
         for t in range(self.num_trials):
-            obs = self.env.reset()
+            seed = self.initial_seed + t
+            obs = self.env.reset(seed=seed)
             pbar = tqdm.tqdm(
                 total=self.max_episode_steps,
                 desc=f"Trial {t + 1}/{self.num_trials}", 
@@ -74,12 +77,17 @@ class EnvRunner:
                 with torch.no_grad():
                     action = policy.predict_action(obs_dict)['actions']
                 action = action.detach().to('cpu').squeeze(0).numpy()
+                # # Due to precision loss in the process of converting absolute actions
+                # # to delta actions, we need to add an extra term to the predicted actions.
                 # drift = 5e-4
                 # action = action + drift
                 obs, reward, done, _ = self.env.step(action)
                 self.env.render()
                 done = np.all(done)
-                pbar.update(action.shape[1])
+                if self.env.enable_temporal_ensemble:
+                    pbar.update(1)
+                else:
+                    pbar.update(action.shape[1])
             pbar.close()
         # Clear out video buffer
         self.env.reset()
