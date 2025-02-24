@@ -201,3 +201,6 @@ class MultiStepWrapper(gym.Wrapper):
         for k, v in self.info.items():
             result[k] = list(v)
         return result
+    
+    def close(self) -> None:
+        super().close()

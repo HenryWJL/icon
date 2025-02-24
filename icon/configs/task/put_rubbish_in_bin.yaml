@@ -12,7 +12,7 @@ env_runner:
   env: 
     _target_: icon.envs.rlbench_env.RLBenchEnv
     task: ${task_name}
-    image_size: 224
+    image_size: 256
     robot: "panda"
     action_mode: "delta_ee_pose"
     render_mode: "rgb_array"
@@ -21,6 +21,6 @@ env_runner:
   action_horizon: ${algo.action_horizon}
   cameras: ${task.cameras}
   max_episode_steps: 200
-  num_trials: 5
-  initial_seed: 100
+  num_trials: 50
+  initial_seed: 10
   video_save_dir: videos/${task_name}/${algo_name}

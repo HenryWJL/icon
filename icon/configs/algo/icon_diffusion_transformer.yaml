@@ -58,5 +58,5 @@ policy:
   prediction_horizon: ${algo.prediction_horizon}
   action_horizon: ${algo.action_horizon}
   action_dim: ${task.shape_meta.actions}
-  num_inference_timesteps: 100
+  num_inference_timesteps: 8
   contrast_loss_coef: 1.0
