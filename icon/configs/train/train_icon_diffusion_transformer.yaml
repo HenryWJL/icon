@@ -1,5 +1,5 @@
 seed: 42
-device: "cuda:6"
+device: "cuda:5"
 batch_size: 64
 num_epochs: 600
 
@@ -33,7 +33,7 @@ optimizer:
 lr_scheduler:
   _target_: icon.utils.train_utils.get_scheduler
   name: "cosine"
-  num_warmup_steps: 1000
+  num_warmup_steps: 500
 
 ema:
   enable: true

@@ -61,13 +61,16 @@ class EnvRunner:
                 to(obs_dict, device)
                 with torch.no_grad():
                     action = policy.predict_action(obs_dict)['actions']
-                action = action.detach().to('cpu').squeeze(0).numpy()
+                action = action.detach().to('cpu').squeeze(0).numpy().astype(np.float64)
                 # # Due to precision loss in the process of converting absolute actions
                 # # to delta actions, we need to add an extra term to the predicted actions.
                 # drift = 1e-4
+                # action += drift
                 # action[action >= 0] += drift
                 # action[action < 0] -= drift
-
+                # print("original: ", action[0])
+                # action[:, 2] += (action[:, 2] > 0).astype(np.float64) * 5e-3
+                # print("new: ", action[0])
                 obs, reward, done, _ = self.env.step(action)
                 self.env.render()
                 done = np.all(done)

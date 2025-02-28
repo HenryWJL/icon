@@ -31,7 +31,7 @@ class Normalizer:
             assert len(data.shape) == 2
             assert mode in ['max_min', 'mean_std']
             if mode == 'max_min':
-                eps = 1e-6
+                eps = 1e-8
                 data_max = data.max(dim=0)[0] - eps
                 data_min = data.min(dim=0)[0] + eps
                 norm_stats = {

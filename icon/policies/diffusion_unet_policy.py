@@ -84,9 +84,13 @@ class DiffusionUnetPolicy(BasePolicy):
         obs_cond = self.obs_encoder(obs)
         actions_pred = self.conditional_sample(obs_cond)
         actions_pred = self.normalizer.unnormalize(actions_pred, key='actions')
-        start = self.obs_horizon - 1
-        end = start + self.action_horizon
-        actions = actions_pred[:, start: end]
+        if self.action_horizon == self.prediction_horizon:
+            # Predict action steps only
+            actions = actions_pred
+        else:
+            start = self.obs_horizon - 1
+            end = start + self.action_horizon
+            actions = actions_pred[:, start: end]
         return dict(
             actions_pred=actions_pred,
             actions=actions

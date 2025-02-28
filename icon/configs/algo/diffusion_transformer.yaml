@@ -1,7 +1,7 @@
 name: diffusion_transformer
 
 obs_horizon: 2
-action_horizon: 8
+action_horizon: 10
 prediction_horizon: 10
 
 policy:
