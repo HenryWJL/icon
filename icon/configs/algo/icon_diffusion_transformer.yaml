@@ -1,7 +1,7 @@
 name: icon_diffusion_transformer
 
 obs_horizon: 2
-action_horizon: 10
+action_horizon: 8
 prediction_horizon: 10
 
 policy:
@@ -58,5 +58,5 @@ policy:
   prediction_horizon: ${algo.prediction_horizon}
   action_horizon: ${algo.action_horizon}
   action_dim: ${task.shape_meta.actions}
-  num_inference_timesteps: 8
+  num_inference_timesteps: 100
   contrast_loss_coef: 1.0
