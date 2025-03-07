@@ -22,5 +22,5 @@ env_runner:
   cameras: ${task.cameras}
   max_episode_steps: 150
   num_trials: 50
-  initial_seed: 1020
+  initial_seed: 1062
   video_save_dir: videos/${task_name}/${algo_name}
