@@ -46,7 +46,11 @@ class EnvRunner:
         raise NotImplementedError
     
     def run(self, policy, device: torch.device) -> None:
-        for t in range(self.num_trials):
+        # Take Lid off Saucepan
+        # episodes = [0, 1, 2, 4, 7, 10, 11, 12, 13, 15, 17, 18, 20, 21, 22, 24, 25, 26, 27, 28, 30, 31, 32, 34, 35, 36, 37, 38, 39, 40, 42, 43, 44, 47, 48, 49, 50, 51, 52, 53, 54, 57, 58, 60, 63, 64, 66, 67, 68, 69]
+        episodes = [47, 48, 49, 50, 51, 52, 53, 54, 57, 58, 60, 63, 64, 66, 67, 68, 69]
+        # for t in range(self.num_trials):
+        for t in episodes:
             seed = self.initial_seed + t
             obs = self.env.reset(seed=seed)
             pbar = tqdm.tqdm(
