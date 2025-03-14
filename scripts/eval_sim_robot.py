@@ -4,7 +4,7 @@ import torch
 from pathlib import Path
 from omegaconf import OmegaConf
 from icon.policies.base_policy import BasePolicy
-from icon.env_runners.base_runner import EnvRunner
+from icon.env_runner import EnvRunner
 
 OmegaConf.register_new_resolver("eval", eval, replace=True)
 
@@ -12,11 +12,11 @@ OmegaConf.register_new_resolver("eval", eval, replace=True)
 @click.option("-t", "--task", type=str, required=True, help="Task name.")
 @click.option("-a", "--algo", type=str, required=True, help="Algorithm name.")
 @click.option("-c", "--checkpoint", type=str, default="", help="Pretrained checkpoint.")
-@click.option("-is", "--image_size", type=int, default=256, help="RGB image size.")
 @click.option("-d", "--device", type=str, default="cuda", help="Device type.")
 @click.option("-nt", "--num_trials", type=int, default=5, help="Number of trials.")
 @click.option("-rm", "--render_mode", type=str, default="rgb_array", help="Rendering mode.")
-def main(task, algo, checkpoint, image_size, device, num_trials, render_mode):
+@click.option("-rs", "--render_size", type=int, default=512, help="Render image size.")
+def main(task, algo, checkpoint, device, num_trials, render_mode, render_size):
     with hydra.initialize_config_dir(
         config_dir=str(Path(__file__).parent.parent.joinpath("icon/configs")),
         version_base="1.2" 
@@ -25,8 +25,8 @@ def main(task, algo, checkpoint, image_size, device, num_trials, render_mode):
             f'task={task}',
             f'algo={algo}',
             f'task.env_runner.num_trials={num_trials}',
-            f'task.env_runner.env.image_size={image_size}',
             f'task.env_runner.env.render_mode={render_mode}',
+            f'task.env_runner.env.render_size={render_size}',
         ]
         cfg = hydra.compose(config_name="config", overrides=overrides)
         env_runner: EnvRunner = hydra.utils.instantiate(cfg.task.env_runner)

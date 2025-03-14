@@ -12,7 +12,7 @@ from rlbench.action_modes.arm_action_modes import JointPosition, JointVelocity, 
 from rlbench.action_modes.action_mode import MoveArmThenGripper
 from rlbench.utils import name_to_task_class
 from scipy.spatial.transform import Rotation as R
-from typing import Dict, Optional, Union, Tuple, Literal
+from typing import Dict, Optional, Union, Tuple, Literal, List
 
 
 def name_to_action_mode(name: str):
@@ -32,27 +32,42 @@ class RLBenchEnv(gym.Env):
     def __init__(
         self, 
         task: str,
-        image_size: Optional[int] = 224,
+        cameras: List,
+        shape_meta: Dict,
         robot: Literal['panda', 'jaco', 'mico', 'sawyer', 'ur5'] = 'panda',
         action_mode: Literal['joint_pos', 'joint_vel', 'ee_pose', 'delta_joint_pos', 'delta_joint_vel', 'delta_ee_pose'] = 'delta_ee_pose',
-        render_mode: Literal['human', 'rgb_array', None] = None
+        render_mode: Literal['human', 'rgb_array', None] = None,
+        render_size: Optional[int] = 512
     ) -> None:
-        camera_config = CameraConfig(
-            rgb=True,
-            depth=False,
-            point_cloud=False,
-            mask=False,
-            image_size=(image_size, image_size)
-        )
-        obs_config = ObservationConfig(
-            left_shoulder_camera=copy.copy(camera_config),
-            right_shoulder_camera=copy.copy(camera_config),
-            overhead_camera=copy.copy(camera_config),
-            wrist_camera=copy.copy(camera_config),
-            front_camera=copy.copy(camera_config)
-        )
-        obs_config.set_all(True)
-
+        all_cameras = {
+            'left_shoulder_camera',
+            'right_shoulder_camera',
+            'overhead_camera',
+            'wrist_camera',
+            'front_camera'
+        }
+        del_cameras = list(all_cameras - set(cameras))
+        camera_configs = {
+            camera: CameraConfig(
+                rgb=True,
+                depth=False,
+                point_cloud=False,
+                mask=False,
+                image_size=(shape_meta['images'], shape_meta['images'])
+            )
+            for camera in cameras
+        }
+        del_camera_configs = {
+            camera: CameraConfig(
+                rgb=False,
+                depth=False,
+                point_cloud=False,
+                mask=False
+            )
+            for camera in del_cameras
+        }
+        obs_config = ObservationConfig(**camera_configs, **del_camera_configs)
+        
         self.action_mode = action_mode
         action_mode = MoveArmThenGripper(
             arm_action_mode=name_to_action_mode(action_mode),
@@ -70,66 +85,60 @@ class RLBenchEnv(gym.Env):
         
         if render_mode is not None:
             cam_placeholder = Dummy("cam_cinematic_placeholder")
-            self.gym_cam = VisionSensor.create([512, 512])
+            self.gym_cam = VisionSensor.create([render_size, render_size])
             self.gym_cam.set_pose(cam_placeholder.get_pose())
             if render_mode == "human":
                 self.gym_cam.set_render_mode(RenderMode.OPENGL3_WINDOWED)
             else:
                 self.gym_cam.set_render_mode(RenderMode.OPENGL3)
-        self.render_mode = render_mode
 
-        obs = self.reset()
         observation_space = dict()
-        for key, value in obs.items():
-            if "rgb" in key:
-                observation_space[key] = spaces.Box(
-                    low=0,
-                    high=255,
-                    shape=value.shape, 
-                    dtype=np.uint8
-                )
-            else:
-                observation_space[key] = spaces.Box(
-                    low=-np.inf,
-                    high=np.inf,
-                    shape=value.shape,
-                    dtype=np.float32
-                )
+        for camera in cameras:
+            observation_space[f'{camera}_images'] = spaces.Box(
+                low=0,
+                high=255,
+                shape=(shape_meta['images'], shape_meta['images'], 3), 
+                dtype=np.uint8
+            )
+        observation_space['low_dims'] = spaces.Box(
+            low=-np.inf,
+            high=np.inf,
+            shape=(shape_meta['low_dims'],),
+            dtype=np.float32
+        )
         self.observation_space = spaces.Dict(observation_space)
-        
-        # We use euler angles instead of quaternions to represent rotations
-        action_shape = (7,) if self.action_mode.endswith("ee_pose") else self.rlbench_env.action_shape
+
         self.action_space = spaces.Box(
             low=-np.inf,
             high=np.inf,
-            shape=action_shape,
+            shape=(shape_meta['actions'],),
             dtype=np.float32
         )
 
-    def _extract_obs(self, rlbench_obs):
-        obs = {} 
-        for state_name in ["joint_velocities", "joint_positions", "joint_forces", "gripper_open", "gripper_pose", "gripper_joint_positions", "gripper_touch_forces", "task_low_dim_state"]:
-            state_data = getattr(rlbench_obs, state_name)
-            if state_data is not None:
-                state_data = np.float32(state_data)
-                if np.isscalar(state_data):
-                    state_data = np.asarray([state_data])
-                obs[state_name] = state_data
-                
-        obs.update({
-            "left_shoulder_rgb": rlbench_obs.left_shoulder_rgb,
-            "right_shoulder_rgb": rlbench_obs.right_shoulder_rgb,
-            "wrist_rgb": rlbench_obs.wrist_rgb,
-            "front_rgb": rlbench_obs.front_rgb,
-            "overhead_rgb": rlbench_obs.overhead_rgb
-        })
+        self.cameras = cameras
+        self.render_mode = render_mode
+
+    def _extract_obs(self, raw_obs) -> Dict:
+        obs = dict()
+        qpos = raw_obs.joint_positions
+        ee_pose = raw_obs.gripper_pose
+        gripper_open = np.array([raw_obs.gripper_open], dtype=np.float32)
+        ee_pose = np.concatenate([
+            ee_pose[:3],
+            R.from_quat(ee_pose[3:]).as_euler('xyz')
+        ])
+        low_dims = np.concatenate([qpos, ee_pose, gripper_open], dtype=np.float32)
+        obs['low_dims'] = low_dims
+        obs.update({f'{camera}_images': getattr(raw_obs, camera.replace('camera', 'rgb')) for camera in self.cameras})
         return obs
 
-    def render(self):
+    def render(self) -> Union[np.ndarray, None]:
         if self.render_mode == 'rgb_array':
             frame = self.gym_cam.capture_rgb()
             frame = np.clip((frame * 255.).astype(np.uint8), 0, 255)
             return frame
+        else:
+            return None
 
     def reset(self, seed: Union[int, None] = None, options: Union[Dict, None] = None) -> Dict:
         super().reset(seed=seed, options=options)

@@ -8,18 +8,19 @@ shape_meta:
   low_dims: 14
   actions: 7
 env_runner:
-  _target_: icon.env_runners.rlbench_runner.RLBenchRunner
+  _target_: icon.env_runner.EnvRunner
   env: 
     _target_: icon.envs.rlbench_env.RLBenchEnv
     task: ${task_name}
-    image_size: 256
+    cameras: ${task.cameras}
+    shape_meta: ${task.shape_meta}
     robot: "panda"
     action_mode: "delta_ee_pose"
     render_mode: "rgb_array"
+    render_size: 512
     
   obs_horizon: ${algo.obs_horizon}
   action_horizon: ${algo.action_horizon}
-  cameras: ${task.cameras}
   max_episode_steps: 150
   num_trials: 50
   initial_seed: 1000
