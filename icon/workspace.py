@@ -21,10 +21,10 @@ class Workspace:
         # Logger
         self.logger = create_logger()
         # Checkpoint Manager
+        self.ckpt_manager: CheckpointManager = hydra.utils.instantiate(cfg.train.val.ckpt_manager)
         self.enable_val = cfg.train.val.enable
         if self.enable_val:
-            self.ckpt_manager: CheckpointManager = hydra.utils.instantiate(cfg.train.val.ckpt_manager)
-            self.val_freq = self.ckpt_manager.val_freq
+            self.val_freq = cfg.train.ckpt_manager.val_freq
         # Policy
         self.policy: BasePolicy = hydra.utils.instantiate(cfg.algo.policy)
         self.policy.to(self.device)
@@ -129,4 +129,7 @@ class Workspace:
 
         if self.enable_val:
             self.ckpt_manager.save_topk()
-            self.logger.info("Checkpoints saved. Training terminated.")
+        else:
+            policy = self.ema_policy if self.enable_ema else self.policy
+            self.ckpt_manager.save(policy.state_dicts())
+        self.logger.info("Checkpoints saved. Training terminated.")
