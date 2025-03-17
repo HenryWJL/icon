@@ -24,7 +24,7 @@ class Workspace:
         self.ckpt_manager: CheckpointManager = hydra.utils.instantiate(cfg.train.val.ckpt_manager)
         self.enable_val = cfg.train.val.enable
         if self.enable_val:
-            self.val_freq = cfg.train.ckpt_manager.val_freq
+            self.val_freq = cfg.train.val.ckpt_manager.val_freq
         # Policy
         self.policy: BasePolicy = hydra.utils.instantiate(cfg.algo.policy)
         self.policy.to(self.device)
