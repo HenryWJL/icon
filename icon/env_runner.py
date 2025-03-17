@@ -70,7 +70,7 @@ class EnvRunner:
                 to(obs, device)
                 with torch.no_grad():
                     action = policy.predict_action(obs)['actions']
-                action = action.detach().to('cpu').squeeze(0).numpy().astype(np.float64)
+                action = action.detach().to('cpu').squeeze(0).numpy()
                 obs, reward, done, _ = self.env.step(action)
                 self.env.render()
                 done = np.all(done)
