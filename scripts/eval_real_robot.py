@@ -121,6 +121,7 @@ class TaskRunner:
                 actions = self.policy.predict_action(obs)['actions']
             actions = actions.detach().to('cpu').squeeze(0).numpy()
             self.step(actions)
+            print(time.time() - start_time)
             time.sleep(max(0, dt - (time.time() - start_time)))
             # policy inference: 0.085s
             self.obs_buffer()
@@ -163,8 +164,8 @@ if __name__ == "__main__":
             wrist_camera="ws://10.16.3.51:8080"
         )
         arm = FrankaPanda("192.168.1.100", stiffness=(400, 40))
-        # gripper = MagiClawGripper()
-        gripper = TestGripper()
+        gripper = MagiClawGripper()
+        # gripper = TestGripper()
         task_runner = TaskRunner(
             policy=policy,
             camera_ips=camera_ips,
@@ -173,6 +174,6 @@ if __name__ == "__main__":
             obs_horizon=cfg.algo.obs_horizon,
             action_horizon=cfg.algo.action_horizon,
             max_episode_steps=200,
-            frequency=10
+            frequency=5
         )
         task_runner.run()
