@@ -10,7 +10,7 @@ dataset:
   obs_horizon: ${algo.obs_horizon}
   action_horizon: ${algo.action_horizon}
   image_mask_keys:
-    - 'front_camera_masks'
+    - 'agentview_masks'
 
 val:
   enable: true

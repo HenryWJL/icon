@@ -32,7 +32,7 @@ optimizer:
 lr_scheduler:
   _target_: icon.utils.train_utils.get_scheduler
   name: "cosine"
-  num_warmup_steps: 500
+  num_warmup_steps: 1000
 
 ema:
   enable: true
