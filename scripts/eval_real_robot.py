@@ -119,9 +119,10 @@ class TaskRunner:
             to(obs, self.device)
             with torch.no_grad():
                 actions = self.policy.predict_action(obs)['actions']
+            print("policy inference: ", time.time() - start_time)
             actions = actions.detach().to('cpu').squeeze(0).numpy()
             self.step(actions)
-            print(time.time() - start_time)
+            print("step: ", time.time() - start_time)
             time.sleep(max(0, dt - (time.time() - start_time)))
             # policy inference: 0.085s
             self.obs_buffer()
@@ -148,7 +149,7 @@ OmegaConf.register_new_resolver("eval", eval, replace=True)
 
 if __name__ == "__main__":
     task = "put_doll_in_box"
-    algo = "diffusion_unet"
+    algo = "diffusion_transformer"
     checkpoint = "/home/wangjl/Downloads/checkpoint.pth"
     with hydra.initialize_config_dir(
         config_dir=str(Path(__file__).parent.parent.joinpath("icon/configs")),
@@ -160,8 +161,8 @@ if __name__ == "__main__":
         state_dicts = torch.load(checkpoint, map_location='cpu')
         policy.load_state_dicts(state_dicts)
         camera_ips = dict(
-            front_camera="ws://10.16.63.1:8080",
-            wrist_camera="ws://10.16.3.51:8080"
+            front_camera="ws://192.168.31.71:8080",
+            wrist_camera="ws://192.168.31.193:8080"
         )
         arm = FrankaPanda("192.168.1.100", stiffness=(400, 40))
         gripper = MagiClawGripper()
@@ -174,6 +175,6 @@ if __name__ == "__main__":
             obs_horizon=cfg.algo.obs_horizon,
             action_horizon=cfg.algo.action_horizon,
             max_episode_steps=200,
-            frequency=5
+            frequency=10
         )
         task_runner.run()

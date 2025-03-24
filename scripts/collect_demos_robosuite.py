@@ -40,6 +40,7 @@ class DemoCollector:
         self.is_recording = False
         self.is_running = True
         self.teleop_init_pose = None
+        self.last_gripper_width = 1.0
         self.data = {
             **{f'{camera}_images': list() for camera in self.cameras},
             'low_dims': list(),
@@ -50,8 +51,8 @@ class DemoCollector:
         self.listener.start()
         self.thread_teleop = threading.Thread(target=self.run_teleop)
         self.thread_teleop.start()
-        # self.thread = threading.Thread(target=self.run)
-        # self.thread.start()
+        self.thread = threading.Thread(target=self.env.render)
+        self.thread.start()
 
     def on_press(self, key: str) -> None:
         try:
@@ -123,6 +124,10 @@ class DemoCollector:
                 if self.local_step == 0:
                     self.teleop_init_pose = matrix2vector(self.teleop.get_obs()['pose'])
                 gripper_width = self.teleop.get_obs()['width']
+                if gripper_width == -1.0:
+                    gripper_width = self.last_gripper_width
+                else:
+                    self.last_gripper_width = gripper_width
                 gripper_action = np.array([1 - 2 * gripper_width])
                 teleop_pose = matrix2vector(self.teleop.get_obs()['pose'])
                 teleop_delta_pose = teleop_pose - self.teleop_init_pose
@@ -137,7 +142,7 @@ class DemoCollector:
                 )
                 action = np.concatenate([arm_action, gripper_action])
                 obs, _, _, _ = self.env.step(action)
-                self.env.render()
+                # self.env.render()
                 for key, val in obs.items():
                     self.data[key].append(val)
                 self.local_step += 1
@@ -171,17 +176,55 @@ class DemoCollector:
 
 
 if __name__ == "__main__":
-    task = "stack_cube"
-    split = "train"
+    # task = "stack_cube"
+    # split = "train"
 
-    dc = DemoCollector(
-        save_dir=f"data/{task}/{split}",
-        teleop_ip="ws://10.16.63.10:8080",
-        task=task,
+    # dc = DemoCollector(
+    #     save_dir=f"data/{task}/{split}",
+    #     teleop_ip="ws://192.168.31.193:8080",
+    #     task=task,
+    #     cameras=['agentview', 'robot0_eye_in_hand'],
+    #     shape_meta=dict(
+    #         images=1024,
+    #         low_dims=14,
+    #         actions=7
+    #     )
+    # )
+
+    client = MagiClawClient("ws://192.168.31.193:8080")
+    time.sleep(2)
+    env = RobosuiteEnv(
+        task="stack_cube",
         cameras=['agentview', 'robot0_eye_in_hand'],
         shape_meta=dict(
             images=1024,
             low_dims=14,
             actions=7
-        )
+        ),
+        render_mode='human',
+        gpu_id=0
     )
+    env.reset()
+    last_pose = None
+    for i in range(200):
+        if i == 0:
+            last_pose = matrix2vector(client.get_obs()['pose'])
+        pose = matrix2vector(client.get_obs()['pose'])
+        teleop_delta_pose = pose - last_pose
+        last_pose = pose
+        scale = 3
+        action = np.array([
+            -teleop_delta_pose[2] * scale,
+            -teleop_delta_pose[0] * scale,
+            teleop_delta_pose[1] * scale,
+            -teleop_delta_pose[5],
+            -teleop_delta_pose[3],
+            teleop_delta_pose[4],
+            1.0
+        ])
+        # start_time = time.time()
+        # action = np.random.rand(7)
+        env.step(action)
+        env.render()
+        # print(time.time() - start_time)
+        # time.sleep(0.01)

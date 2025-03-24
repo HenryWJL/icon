@@ -7,14 +7,16 @@ from typing import Dict, Optional, Union, Tuple, Literal, List
 
 
 def task_to_env_name(task: str) -> str:
+    if task == 'lift_cube':
+        return 'Lift'
     if task == 'stack_cube':
         return 'Stack'
     elif task == 'open_door':
         return 'Door'
-    elif task == 'assemble_square_nut':
-        return 'NutAssemblySquare'
-    elif task == 'pick_place_can':
-        return 'PickPlaceCan'
+    elif task == 'assemble_round_nut':
+        return 'NutAssemblyRound'
+    elif task == 'pick_place_cereal':
+        return 'PickPlaceCereal'
 
 
 class RobosuiteEnv(gym.Env):
@@ -87,12 +89,15 @@ class RobosuiteEnv(gym.Env):
             self.render_cache = np.flipud(raw_obs[f'{self.render_camera}_image'])
 
         obs = dict()
-        qpos = np.arctan2(raw_obs['robot0_joint_pos_sin'], raw_obs['robot0_joint_pos_cos'])
-        ee_pose = np.concatenate(
-            [raw_obs['robot0_eef_pos'], R.from_quat(raw_obs['robot0_eef_quat']).as_euler('xyz')]
-        )
-        gripper_open = np.array([raw_obs['robot0_gripper_qpos'][0] > 0.039], dtype=np.float32)
-        low_dims = np.concatenate([qpos, ee_pose, gripper_open], dtype=np.float32)
+        # qpos = np.arctan2(raw_obs['robot0_joint_pos_sin'], raw_obs['robot0_joint_pos_cos'])
+        # ee_pose = np.concatenate(
+        #     [raw_obs['robot0_eef_pos'], R.from_quat(raw_obs['robot0_eef_quat']).as_euler('xyz')]
+        # )
+        # gripper_open = np.array([raw_obs['robot0_gripper_qpos'][0] > 0.039], dtype=np.float32)
+        # low_dims = np.concatenate([qpos, ee_pose, gripper_open], dtype=np.float32)
+        ee_pose = np.concatenate([raw_obs['robot0_eef_pos'], raw_obs['robot0_eef_quat']])
+        gripper_qpos = raw_obs['robot0_gripper_qpos']
+        low_dims = np.concatenate([ee_pose, gripper_qpos], dtype=np.float32)
         obs['low_dims'] = low_dims
         obs.update({f'{camera}_images': np.flipud(raw_obs[f'{camera}_image']) for camera in self.cameras})
         return obs
