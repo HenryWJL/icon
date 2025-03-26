@@ -51,7 +51,7 @@ class RobosuiteEnv(gym.Env):
             env_kwargs['has_renderer'] = True
         else:
             if render_camera not in cameras:
-                env_kwargs['camera_names'] = cameras + [render_camera]
+                env_kwargs['camera_names'] = [*cameras, render_camera]
         if gpu_id is not None:
             env_kwargs['render_gpu_device_id'] = gpu_id
         self.robosuite_env = robosuite.make(**env_kwargs)
@@ -119,6 +119,7 @@ class RobosuiteEnv(gym.Env):
 
     def step(self, action: np.ndarray) -> Tuple:
         obs, reward, done, info = self.robosuite_env.step(action)
+        done = bool(reward) or done
         return self._extract_obs(obs), reward, done, info
     
 
