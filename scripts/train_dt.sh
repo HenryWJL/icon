@@ -8,3 +8,5 @@ python scripts/train.py task=pick_place_cereal algo=diffusion_transformer train.
 python scripts/train.py task=stack_cube algo=diffusion_transformer
 python scripts/train.py task=stack_cube algo=diffusion_transformer train.seed=0
 python scripts/train.py task=stack_cube algo=diffusion_transformer train.seed=100
+python scripts/train.py task=lift_cube algo=diffusion_transformer train.seed=0
+python scripts/train.py task=lift_cube algo=diffusion_transformer train.seed=100
