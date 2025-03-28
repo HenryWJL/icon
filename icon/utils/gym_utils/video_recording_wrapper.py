@@ -13,7 +13,7 @@ class VideoRecordingWrapper(gym.Wrapper):
         video_save_dir: Union[str, None] = None
     ) -> None:
         super().__init__(env)
-        self.global_step = 0
+        self.global_step = 11
         if video_save_dir is None:
             self.record_videos = False
         else:
