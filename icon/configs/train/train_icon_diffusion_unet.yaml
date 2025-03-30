@@ -9,8 +9,7 @@ dataset:
   prediction_horizon: ${algo.prediction_horizon}
   obs_horizon: ${algo.obs_horizon}
   action_horizon: ${algo.action_horizon}
-  image_mask_keys:
-    - 'agentview_masks'
+  image_mask_keys: ${task.image_mask_keys}
 
 val:
   enable: true

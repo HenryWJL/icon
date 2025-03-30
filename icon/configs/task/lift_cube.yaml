@@ -7,6 +7,8 @@ shape_meta:
   images: 256
   low_dims: 9
   actions: 7
+image_mask_keys:
+  - 'agentview_masks'
 env_runner:
   _target_: icon.env_runner.EnvRunner
   env: 
