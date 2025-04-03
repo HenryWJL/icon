@@ -89,8 +89,8 @@ class IConViT(ViT):
         )
         # Losses are computed on batches with enough samples.
         flag = torch.logical_and(count_mask >= self.num_samples_mask, count_unmask >= self.num_samples_unmask).float()
-        # loss = ((loss_unmask + loss_mask) * flag).sum() / flag.sum()
-        loss = ((loss_unmask + loss_mask) * flag).mean()
+        loss = ((loss_unmask + loss_mask) * flag).sum() / flag.sum()
+        # loss = ((loss_unmask + loss_mask) * flag).mean()
         return loss
         
     def forward(self, x: Tensor, mask: Union[Tensor, None] = None) -> Union[Tensor, Tuple]:
