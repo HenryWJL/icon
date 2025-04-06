@@ -8,7 +8,7 @@ from diffusers.schedulers.scheduling_ddpm import DDPMScheduler
 from diffusers.schedulers.scheduling_ddim import DDIMScheduler
 from timm.models.vision_transformer import Attention
 from icon.models.observation.obs_encoder import MultiModalObsEncoder
-from icon.models.diffusion.unet import ConditionalUnet1D
+from icon.models.diffusion.unet import ConditionalUnet1D, ConditionalUnet1DwDecTypeA
 from icon.policies.base_policy import BasePolicy
 from icon.utils.train_utils import get_optim_groups
 
@@ -122,6 +122,47 @@ class DiffusionUnetPolicy(BasePolicy):
             betas=betas
         )
         return optimizer
+    
+
+class AEDiffusionUnetPolicy(DiffusionUnetPolicy):
+
+    def __init__(
+        self,
+        recons_loss_coef: int,
+        *args,
+        **kwargs
+    ) -> None:
+        super().__init__(*args, **kwargs)
+        self.recons_loss_coef = recons_loss_coef
+
+    def compute_loss(self, batch: Dict) -> Tensor:
+        batch = self.normalizer.normalize(batch)
+        x = batch['actions']
+        obs_cond = self.obs_encoder(batch['obs'])
+
+        batch_size = x.shape[0]
+        with torch.device(x.device):
+            noise = torch.randn(x.shape)
+            timesteps = torch.randint(
+                low=0, 
+                high=self.noise_scheduler.config.num_train_timesteps,
+                size=(batch_size,),
+                dtype=torch.long
+            )
+        noisy_x = self.noise_scheduler.add_noise(x, noise, timesteps)
+        pred, recons_loss = self.noise_predictor(noisy_x, timesteps, obs_cond, batch['obs'])
+        if self.noise_scheduler.config.prediction_type == 'epsilon':
+            target = noise
+        elif self.noise_scheduler.config.prediction_type == 'sample':
+            target = x
+        diffusion_loss = F.mse_loss(pred, target)
+        loss = diffusion_loss + self.recons_loss_coef * recons_loss
+        loss_dict = dict(
+            diffusion_loss=diffusion_loss,
+            recons_loss=recons_loss,
+            loss=loss
+        )
+        return loss_dict
     
 
 class IConDiffusionUnetPolicy(DiffusionUnetPolicy):

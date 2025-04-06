@@ -81,6 +81,7 @@ class Workspace:
         for epoch in tqdm(range(self.num_epochs), desc="Policy Training"):
             train_losses = dict(
                 diffusion_loss=list(),
+                recons_loss=list(),
                 contrast_loss=list(),
                 loss=list()
             )
