@@ -8,7 +8,7 @@ from diffusers.schedulers.scheduling_ddpm import DDPMScheduler
 from diffusers.schedulers.scheduling_ddim import DDIMScheduler
 from timm.models.vision_transformer import Attention
 from icon.models.observation.obs_encoder import MultiModalObsEncoder
-from icon.models.diffusion.unet import ConditionalUnet1D, ConditionalUnet1DwDecTypeA
+from icon.models.diffusion.unet import ConditionalUnet1D
 from icon.policies.base_policy import BasePolicy
 from icon.utils.train_utils import get_optim_groups
 
