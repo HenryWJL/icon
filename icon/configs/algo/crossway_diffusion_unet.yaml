@@ -43,8 +43,8 @@ policy:
     cameras: ${task.cameras}
     shape_meta: ${task.shape_meta}
     decode_dims:
+      - 64
       - 128
-      - 256
     decode_low_dim_dims:
       - 4
       - 2
