@@ -91,3 +91,22 @@
 #     f['/data/front_camera_images'] = front_images
 #     f['/data/wrist_camera_images'] = wrist_images
 #     f['/meta/episode_ends'] = cumulative_episode_lens
+
+import math
+
+# Define the three numbers
+num1 = 11 * 2 / 100
+num2 = 10 * 2 / 100
+num3 = 12 * 2 / 100
+
+# Compute the mean
+mean = (num1 + num2 + num3) / 3
+
+# Compute the variance
+variance = ((num1 - mean)**2 + (num2 - mean)**2 + (num3 - mean)**2) / 3
+
+# Compute the standard deviation
+std_deviation = math.sqrt(variance)
+
+print(f"The mean is: {mean}")
+print(f"The standard deviation is: {std_deviation}")

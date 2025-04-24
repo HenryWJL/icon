@@ -20,10 +20,10 @@ class EnvRunner:
         initial_seed: Optional[int] = 10000,
         video_save_dir: Union[str, None] = None
     ) -> None:
-        env = VideoRecordingWrapper(
-            env=env,
-            video_save_dir=video_save_dir
-        )
+        # env = VideoRecordingWrapper(
+        #     env=env,
+        #     video_save_dir=video_save_dir
+        # )
         env = MultiStepWrapper(
             env=env,
             obs_horizon=obs_horizon,
@@ -58,8 +58,14 @@ class EnvRunner:
         # episodes = [3, 7, 9, 10, 14, 15, 20, 23, 24, 25, 26, 28, 31, 36, 40, 41, 43, 45, 47]
         
         # Put Rubbish In Bin
-        episodes = [0, 1, 2, 4, 9, 11, 12, 13, 20, 26, 28, 33, 34, 35, 36, 37, 38, 39, 40, 41, 45, 50, 52, 53, 54, 56, 57, 58, 60, 64, 65, 68, 69, 70, 71, 72, 78, 80, 84, 85, 87, 89, 90, 91, 94, 97, 100, 101, 102, 104]
-        episodes = [0, 1, 2, 4, 9, 11, 12, 13, 20, 26, 28, 33, 34, 35, 36, 37, 38, 39, 40, 41, 45, 50, 52, 53, 54, 56, 57, 58, 60, 64, 65, 68, 69, 70, 71, 72, 78, 80, 84, 85, 87, 89, 90, 91, 94, 97, 100, 101, 102, 104]
+        # episodes = [0, 1, 2, 4, 9, 11, 12, 13, 20, 26, 28, 33, 34, 35, 36, 37, 38, 39, 40, 41, 45, 50, 52, 53, 54, 56, 57, 58, 60, 64, 65, 68, 69, 70, 71, 72, 78, 80, 84, 85, 87, 89, 90, 91, 94, 97, 100, 101, 102, 104]
+        # old_episodes = [0, 1, 2, 4, 9, 11, 12, 13, 20, 26, 28, 33, 34, 35, 36, 37, 38, 39, 40, 41, 45, 50, 52, 53, 54, 56, 57, 58, 60, 64, 65, 68, 69, 70, 71, 72, 78, 80, 84, 85, 87, 89, 90, 91, 94, 97, 100, 101, 102, 104]
+        # idx = [6]
+        # episodes = []
+        # for i in idx:
+        #     episodes.append(old_episodes[i - 1])
+
+        success = 0
         for t in range(self.num_trials):
         # for t in episodes:
             seed = self.initial_seed + t
@@ -77,13 +83,19 @@ class EnvRunner:
                 with torch.no_grad():
                     action = policy.predict_action(obs)['actions']
                 action = action.detach().to('cpu').squeeze(0).numpy()
+                # # only for put rubbish in bin
+                # if obs['low_dims'][:, 1, -1] < 0.5:
+                #     action[:, 2] *= 3
                 obs, reward, done, _ = self.env.step(action)
                 self.env.render()
                 done = np.all(done)
+                if reward:
+                    success += 1
                 if self.env.enable_temporal_ensemble:
                     pbar.update(1)
                 else:
                     pbar.update(action.shape[1])
             pbar.close()
+        print(f"Success rate: {success / self.num_trials}")
         # Clear out video buffer
         self.env.reset()
