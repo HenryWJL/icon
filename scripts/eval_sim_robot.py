@@ -43,11 +43,11 @@ def main(task, algo, checkpoint, device, num_trials, render_mode):
 
         env_runner.run(policy, device)
 
-        for i in range(1, 21):
-            checkpoint = f"/home/wangjl/Downloads/du_checkpoints/{i * 50}.pth"
-            state_dicts = torch.load(checkpoint, map_location=device)
-            policy.load_state_dicts(state_dicts)
-            env_runner.run(policy, device)
+        # for i in range(1, 21):
+        #     checkpoint = f"/home/wangjl/Downloads/checkpoints/{i * 50}.pth"
+        #     state_dicts = torch.load(checkpoint, map_location=device)
+        #     policy.load_state_dicts(state_dicts)
+        #     env_runner.run(policy, device)
     
 
 if __name__ == "__main__":

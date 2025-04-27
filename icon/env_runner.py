@@ -20,10 +20,10 @@ class EnvRunner:
         initial_seed: Optional[int] = 10000,
         video_save_dir: Union[str, None] = None
     ) -> None:
-        # env = VideoRecordingWrapper(
-        #     env=env,
-        #     video_save_dir=video_save_dir
-        # )
+        env = VideoRecordingWrapper(
+            env=env,
+            video_save_dir=video_save_dir
+        )
         env = MultiStepWrapper(
             env=env,
             obs_horizon=obs_horizon,
@@ -53,7 +53,7 @@ class EnvRunner:
     def run(self, policy, device: torch.device) -> None:
         # Take Lid off Saucepan
         # episodes = [0, 1, 2, 4, 7, 10, 11, 12, 13, 15, 17, 18, 20, 21, 22, 24, 25, 26, 27, 28, 30, 31, 32, 34, 35, 36, 37, 38, 39, 40, 42, 43, 44, 47, 48, 49, 50, 51, 52, 53, 54, 57, 58, 60, 63, 64, 66, 67, 68, 69]
-
+        
         # Play Jenga
         # episodes = [3, 7, 9, 10, 14, 15, 20, 23, 24, 25, 26, 28, 31, 36, 40, 41, 43, 45, 47]
         

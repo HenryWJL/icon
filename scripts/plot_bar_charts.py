@@ -1,5 +1,21 @@
 import numpy as np
+import seaborn as sns
 import matplotlib.pyplot as plt
+
+# Use seaborn style for clean aesthetics
+sns.set_theme(style='whitegrid', context='talk')
+
+# Optional: LaTeX-style fonts (requires LaTeX installed)
+plt.rcParams.update({
+    'font.family': 'serif',
+    # 'font.serif': ['Times New Roman'],
+    'text.usetex': False,  # Set to True if LaTeX is available
+    'axes.labelsize': 14,
+    'axes.titlesize': 16,
+    'legend.fontsize': 12,
+    'xtick.labelsize': 12,
+    'ytick.labelsize': 12
+})
 
 # Data
 models = ['ICon', 'W/o Multi-Level Contrast', 'W/o FPS']
@@ -34,7 +50,7 @@ ax.legend(
 )
 
 # Y-axis label
-ax.set_ylabel('Success Rate', fontsize=12)
+ax.set_ylabel('Success Rate', fontsize=15)
 
 # Dashed gridlines behind bars
 ax.yaxis.grid(True, linestyle='--', linewidth=0.5)
