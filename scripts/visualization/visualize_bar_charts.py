@@ -65,5 +65,5 @@ plt.title('Open Box', fontsize=16)
 
 # Layout adjustment
 plt.tight_layout()
-plt.savefig(f"ablation.svg")
+plt.savefig(f"ablation.svg", bbox_inches='tight', pad_inches=0)
 plt.show()
