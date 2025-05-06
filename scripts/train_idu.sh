@@ -1,14 +1,5 @@
 #!/bin/bash
 
-python scripts/train.py task=pull_cube algo=icon_diffusion_unet
-python scripts/train.py task=place_sphere algo=icon_diffusion_unet
-python scripts/train.py task=lift_peg_upright algo=icon_diffusion_unet
-python scripts/train.py task=peg_insertion_side algo=icon_diffusion_unet
-python scripts/train.py task=pull_cube algo=icon_diffusion_unet train.seed=0
-python scripts/train.py task=place_sphere algo=icon_diffusion_unet train.seed=0
-python scripts/train.py task=lift_peg_upright algo=icon_diffusion_unet train.seed=0
-python scripts/train.py task=peg_insertion_side algo=icon_diffusion_unet train.seed=0
-python scripts/train.py task=pull_cube algo=icon_diffusion_unet train.seed=100
-python scripts/train.py task=place_sphere algo=icon_diffusion_unet train.seed=100
-python scripts/train.py task=lift_peg_upright algo=icon_diffusion_unet train.seed=100
-python scripts/train.py task=peg_insertion_side algo=icon_diffusion_unet train.seed=100
+# noisy mask
+python scripts/train.py task=open_door algo=icon_diffusion_unet train.seed=0 train.device=cuda:7
+python scripts/train.py task=stack_cube algo=crossway_diffusion_unet train.seed=100 train.device=cuda:7 train.epoch=100 train.batch_size=16 train.val.ckpt_manager.val_freq=5 train.val.ckpt_manager.topk=20
