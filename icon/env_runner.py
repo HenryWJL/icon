@@ -86,6 +86,10 @@ class EnvRunner:
                 # # only for put rubbish in bin
                 # if obs['low_dims'][:, 1, -1] < 0.5:
                 #     action[:, 2] *= 3
+
+                # only for play jenga
+                if obs['low_dims'][:, 1, -1] < 1.0:
+                    action[action[:, 1] > 0, 1] *= 5
                 obs, reward, done, _ = self.env.step(action)
                 self.env.render()
                 done = np.all(done)

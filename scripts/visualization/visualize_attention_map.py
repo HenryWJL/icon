@@ -11,15 +11,15 @@ from omegaconf import OmegaConf
 OmegaConf.register_new_resolver("eval", eval, replace=True)
 
 
-task = "open_box"
-algo = "icon_diffusion_unet"
+task = "play_jenga"
+algo = "diffusion_transformer"
 camera = "front_camera"
 device = torch.device('cuda')
 
 # Load ViT model
 checkpoint = f"checkpoints/{task}/{algo}.pth"
 with hydra.initialize_config_dir(
-        config_dir=str(Path(__file__).parent.parent.joinpath("icon/configs")),
+        config_dir=str(Path(__file__).parent.parent.parent.joinpath("icon/configs")),
         version_base="1.2" 
     ):
         overrides = [
@@ -72,8 +72,8 @@ transform = T.Compose([
 ])
 
 # Load image
-frame_id = 90
-video_path = f"/home/wangjl/project/cross_embodiment/data/ee_pose/{task}/train/episode_003/videos/{camera}.mp4"
+frame_id = 81
+video_path = f"/home/wangjl/project/cross_embodiment/data/ee_delta_pose/{task}/train/episode_007/videos/{camera}.mp4"
 img = None
 with av.open(str(video_path)) as container:
     for i, frame in enumerate(container.decode(video=0)):
