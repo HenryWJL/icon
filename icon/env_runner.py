@@ -20,10 +20,10 @@ class EnvRunner:
         initial_seed: Optional[int] = 10000,
         video_save_dir: Union[str, None] = None
     ) -> None:
-        # env = VideoRecordingWrapper(
-        #     env=env,
-        #     video_save_dir=video_save_dir
-        # )
+        env = VideoRecordingWrapper(
+            env=env,
+            video_save_dir=video_save_dir
+        )
         env = MultiStepWrapper(
             env=env,
             obs_horizon=obs_horizon,
