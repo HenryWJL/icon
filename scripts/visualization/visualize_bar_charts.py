@@ -60,7 +60,7 @@ ax.set_axisbelow(True)
 ax.spines['top'].set_visible(False)
 ax.spines['right'].set_visible(False)
 
-# No title
+# Title
 plt.title('Open Box', fontsize=16)
 
 # Layout adjustment
