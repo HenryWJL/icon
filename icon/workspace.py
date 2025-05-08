@@ -28,6 +28,9 @@ class Workspace:
         # Policy
         self.policy: BasePolicy = hydra.utils.instantiate(cfg.algo.policy)
         self.policy.to(self.device)
+        if Path(cfg.train.checkpoints).is_file():
+            state_dicts = torch.load(cfg.train.checkpoints, map_location=self.device)
+            self.policy.load_state_dicts(state_dicts)
         # Dataloader
         train_dataset: Dataset = hydra.utils.instantiate(
             cfg.train.dataset,
