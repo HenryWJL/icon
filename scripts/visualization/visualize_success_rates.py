@@ -17,9 +17,40 @@ plt.rcParams.update({
     'ytick.labelsize': 12
 })
 
-# open door
+# open door (1000 epochs, 50 val freq)
 # du: 0.86, 0.84, 0.84, 0.92, 0.84, 0.82, 0.84, 0.8, 0.9, 0.88, 0.86, 0.88, 0.78, 0.84, 0.8, 0.86, 0.88, 0.76, 0.96, 0.86                                                                                           
 # idu: 0.84, 0.92, 0.88, 0.9, 0.88, 0.88, 0.82, 0.88, 0.9, 0.84, 0.9, 0.8, 0.92, 0.9, 0.9, 0.88, 0.92, 0.84, 0.92, 0.92                                                                                         
+
+# open door (150-600 epochs, 50 val freq)
+# cdu: 0.86, 0.86, 0.84, 0.88, 0.84
+
+# stack cube (100 epochs, 5 val freq)
+# idu: Success rate: 0.06                                                                                           
+# Success rate: 0.1                                                                                            
+# Success rate: 0.04                                                                                           
+# Success rate: 0.1                                                                                            
+# Success rate: 0.04                                                                                           
+# Success rate: 0.08                                                                                           
+# Success rate: 0.06                                                                                           
+# Success rate: 0.18                                                                                           
+# Success rate: 0.06                                                                                           
+# Success rate: 0.14                                                                                           
+# Success rate: 0.08                                                                                           
+# Success rate: 0.1
+
+# cdu:
+# Success rate: 0.06                                                                                           
+# Success rate: 0.06                                                                                           
+# Success rate: 0.04                                                                                           
+# Success rate: 0.06                                                                                           
+# Success rate: 0.02                                                                                           
+# Success rate: 0.06                                                                                           
+# Success rate: 0.08                                                                                           
+# Success rate: 0.02                                                                                           
+# Success rate: 0.04                                                                                           
+# Success rate: 0.06                                                                                           
+# Success rate: 0.08                                                                                           
+# Success rate: 0.1
 
 # Data
 epochs = list(range(50, 1001, 50))
