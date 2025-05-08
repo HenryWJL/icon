@@ -1,5 +1,11 @@
 #!/bin/bash
 
-python scripts/train.py task=lift_cube algo=icon_diffusion_unet train.device=cuda:3 train.num_epochs=300 train.optimizer.learning_rate=0.00001 train.checkpoints="outputs/lift_cube/icon_diffusion_unet/2025-04-01/10-46-19/checkpoints/600_2.04608.pth"
-python scripts/train.py task=open_door algo=icon_diffusion_unet train.device=cuda:3 train.num_epochs=300 train.optimizer.learning_rate=0.00001 train.checkpoints="outputs/open_door/icon_diffusion_unet/2025-04-04/11-39-10/checkpoints/600_0.75956.pth"
-python scripts/train.py task=stack_cube algo=icon_diffusion_unet train.device=cuda:3 train.num_epochs=300 train.optimizer.learning_rate=0.00001 train.checkpoints="outputs/stack_cube/icon_diffusion_unet/2025-04-05/22-55-40/checkpoints/600_0.39937.pth"
+# python scripts/train.py task=lift_cube algo=icon_diffusion_unet train.device=cuda:6 train.num_epochs=300 train.checkpoints="outputs/lift_cube/icon_diffusion_unet/2025-04-01/10-46-19/checkpoints/600_2.04608.pth"
+# python scripts/train.py task=open_door algo=icon_diffusion_unet train.device=cuda:6 train.num_epochs=600 train.checkpoints="outputs/open_door/icon_diffusion_unet/2025-04-04/11-39-10/checkpoints/600_0.75956.pth"
+# python scripts/train.py task=stack_cube algo=icon_diffusion_unet train.device=cuda:6 train.num_epochs=300 train.checkpoints="outputs/stack_cube/icon_diffusion_unet/2025-04-05/22-55-40/checkpoints/600_0.39937.pth"
+python scripts/train.py task=lift_cube algo=icon_diffusion_unet train.device=cuda:6 train.num_epochs=300 train.seed=0 train.checkpoints="outputs/lift_cube/icon_diffusion_unet/2025-04-03/21-05-47/checkpoints/600_2.82736.pth"
+python scripts/train.py task=open_door algo=icon_diffusion_unet train.device=cuda:6 train.num_epochs=600 train.seed=0 train.checkpoints="outputs/open_door/icon_diffusion_unet/2025-04-06/10-43-48/checkpoints/600_0.65766.pth"
+python scripts/train.py task=stack_cube algo=icon_diffusion_unet train.device=cuda:6 train.num_epochs=300 train.seed=0 train.checkpoints="outputs/stack_cube/icon_diffusion_unet/2025-04-07/12-14-47/checkpoints/600_0.46679.pth"
+python scripts/train.py task=lift_cube algo=icon_diffusion_unet train.device=cuda:6 train.num_epochs=300 train.seed=100 train.checkpoints="outputs/lift_cube/icon_diffusion_unet/2025-04-08/02-31-18/checkpoints/600_2.66962.pth"
+python scripts/train.py task=open_door algo=icon_diffusion_unet train.device=cuda:6 train.num_epochs=600 train.seed=100 train.checkpoints="outputs/open_door/icon_diffusion_unet/2025-04-08/11-27-36/checkpoints/600_0.71748.pth"
+python scripts/train.py task=stack_cube algo=icon_diffusion_unet train.device=cuda:6 train.num_epochs=300 train.seed=100 train.checkpoints="outputs/stack_cube/icon_diffusion_unet/2025-04-09/04-08-56/checkpoints/600_0.45673.pth"
