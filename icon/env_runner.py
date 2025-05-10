@@ -90,6 +90,10 @@ class EnvRunner:
                 # # only for play jenga
                 # if obs['low_dims'][:, 1, -1] < 1.0:
                 #     action[action[:, 1] > 0, 1] *= 5
+
+                # only for close microwave (unet)
+                action[:, 2] *= 2
+
                 obs, reward, done, _ = self.env.step(action)
                 self.env.render()
                 done = np.all(done)

@@ -11,7 +11,7 @@ from omegaconf import OmegaConf
 OmegaConf.register_new_resolver("eval", eval, replace=True)
 
 
-task = "play_jenga"
+task = "close_microwave"
 algo = "diffusion_transformer"
 camera = "front_camera"
 device = torch.device('cuda')
@@ -72,8 +72,8 @@ transform = T.Compose([
 ])
 
 # Load image
-frame_id = 81
-video_path = f"/home/wangjl/project/cross_embodiment/data/ee_delta_pose/{task}/train/episode_007/videos/{camera}.mp4"
+frame_id = 50
+video_path = f"/home/wangjl/project/cross_embodiment/data/ee_delta_pose/{task}/train/episode_002/videos/{camera}.mp4"
 img = None
 with av.open(str(video_path)) as container:
     for i, frame in enumerate(container.decode(video=0)):
