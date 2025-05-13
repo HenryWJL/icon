@@ -19,27 +19,46 @@ plt.rcParams.update({
 
 # Data
 models = ['ICon', 'W/o Multi-Level Contrast', 'W/o FPS']
-success_rates = [0.30, 0.26, 0.22]
+success_rates = [0.300, 0.260, 0.220]
+std = [0.043, 0.028, 0.085]
 
 # Plot
 fig, ax = plt.subplots()
-bars = ax.bar(models, success_rates, width=0.4, color=['#FAD7AC', '#D0CEE2', '#D5E8D4'])  # ['#FDC378', '#FFA533', '#FF8633']
 
 # Remove x-axis labels
 ax.set_xticks([])
 
-# Add values on top of bars
-for bar, value in zip(bars, success_rates):
-    height = bar.get_height()
-    ax.text(bar.get_x() + bar.get_width() / 2, height + 0.01,
-            f'{value:.2f}', ha='center', va='bottom', fontsize=10)
+# Bar plot with error bars
+bars = ax.bar(
+    models,
+    success_rates,
+    yerr=std,
+    capsize=5,
+    width=0.4,
+    color=['#FAD7AC', '#D0CEE2', '#D5E8D4'],
+    edgecolor='black',
+    linewidth=0.8
+)
 
-# Assign labels for legend
-for bar, label in zip(bars, models):
-    bar.set_label(label)
+# Optional: Remove x-axis ticks if using legend labels instead
+# ax.set_xticks([])
+
+# Add values on top of bars
+for i, (bar, value) in enumerate(zip(bars, success_rates)):
+    height = bar.get_height()
+    ax.text(
+        bar.get_x() + bar.get_width() / 2,
+        height + std[i] + 0.01,
+        f'{value:.3f} ± {std[i]:.3f}',
+        ha='center',
+        va='bottom',
+        fontsize=10
+    )
 
 # Legend: bottom, horizontal, with box and smaller font
 ax.legend(
+    handles=bars,
+    labels=models,
     loc='lower center',
     bbox_to_anchor=(0.5, -0.2),
     ncol=3,
@@ -65,5 +84,5 @@ plt.title('Open Box', fontsize=16)
 
 # Layout adjustment
 plt.tight_layout()
-plt.savefig(f"ablation.svg", bbox_inches='tight', pad_inches=0)
+plt.savefig("ablation.svg", bbox_inches='tight', pad_inches=0)
 plt.show()
