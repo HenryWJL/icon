@@ -14,7 +14,7 @@ conda activate icon_env
 ```
 Then, install the Python package:
 ```
-pip install git+https://github.com/HenryWJL/icon.git
+pip install -e .
 ```
 This will automatically install all dependencies required to reproduce our experimental results in simulation. Note that running the RLBench environment requires **CoppeliaSim** to be installed. If you haven't installed CoppeliaSim yet, please follow the instructions [here](https://github.com/stepjam/RLBench?tab=readme-ov-file#install) to set it up.
  
