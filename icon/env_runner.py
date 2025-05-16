@@ -38,8 +38,7 @@ class EnvRunner:
     
     def _process_obs(self, raw_obs: Dict) -> Dict:
         """
-        Process observations from gym environments such that
-        their formats satisfy the requirements of policies.
+        Process observations from gym environments.
         """
         obs = dict()
         images = dict()
@@ -51,28 +50,13 @@ class EnvRunner:
         return obs
     
     def run(self, policy, device: torch.device) -> None:
-        # Take Lid off Saucepan
-        # episodes = [0, 1, 2, 4, 7, 10, 11, 12, 13, 15, 17, 18, 20, 21, 22, 24, 25, 26, 27, 28, 30, 31, 32, 34, 35, 36, 37, 38, 39, 40, 42, 43, 44, 47, 48, 49, 50, 51, 52, 53, 54, 57, 58, 60, 63, 64, 66, 67, 68, 69]
-        
-        # Play Jenga
-        # episodes = [3, 7, 9, 10, 14, 15, 20, 23, 24, 25, 26, 28, 31, 36, 40, 41, 43, 45, 47]
-        
-        # Put Rubbish In Bin
-        # episodes = [0, 1, 2, 4, 9, 11, 12, 13, 20, 26, 28, 33, 34, 35, 36, 37, 38, 39, 40, 41, 45, 50, 52, 53, 54, 56, 57, 58, 60, 64, 65, 68, 69, 70, 71, 72, 78, 80, 84, 85, 87, 89, 90, 91, 94, 97, 100, 101, 102, 104]
-        # old_episodes = [0, 1, 2, 4, 9, 11, 12, 13, 20, 26, 28, 33, 34, 35, 36, 37, 38, 39, 40, 41, 45, 50, 52, 53, 54, 56, 57, 58, 60, 64, 65, 68, 69, 70, 71, 72, 78, 80, 84, 85, 87, 89, 90, 91, 94, 97, 100, 101, 102, 104]
-        # idx = [6]
-        # episodes = []
-        # for i in idx:
-        #     episodes.append(old_episodes[i - 1])
-
         success = 0
-        for t in range(self.num_episodes):
-        # for t in episodes:
-            seed = self.initial_seed + t
+        for i in range(self.num_episodes):
+            seed = self.initial_seed + i
             obs = self.env.reset(seed=seed)
             pbar = tqdm.tqdm(
                 total=self.max_episode_steps,
-                desc=f"Trial {t + 1}/{self.num_episodes}", 
+                desc=f"Trial {i + 1}/{self.num_episodes}", 
                 leave=False,
                 mininterval=5.0
             )
@@ -83,14 +67,6 @@ class EnvRunner:
                 with torch.no_grad():
                     action = policy.predict_action(obs)['actions']
                 action = action.detach().to('cpu').squeeze(0).numpy()
-                # # only for put rubbish in bin
-                # if obs['low_dims'][:, 1, -1] < 0.5:
-                #     action[:, 2] *= 3
-
-                # # only for play jenga
-                # if obs['low_dims'][:, 1, -1] < 1.0:
-                #     action[action[:, 1] > 0, 1] *= 5
-
                 obs, reward, done, _ = self.env.step(action)
                 self.env.render()
                 done = np.all(done)
@@ -102,5 +78,4 @@ class EnvRunner:
                     pbar.update(action.shape[1])
             pbar.close()
         print(f"Success rate: {success / self.num_episodes}")
-        # Clear out video buffer
         self.env.reset()
