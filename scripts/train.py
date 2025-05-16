@@ -2,6 +2,7 @@ import hydra
 import warnings
 from omegaconf import OmegaConf
 from pathlib import Path
+from icon.workspace import Workspace
 
 warnings.filterwarnings("ignore")
 OmegaConf.register_new_resolver("eval", eval, replace=True)
@@ -14,7 +15,7 @@ OmegaConf.register_new_resolver("eval", eval, replace=True)
 def main(cfg: OmegaConf):
     OmegaConf.resolve(cfg)
     cls = hydra.utils.get_class(cfg._target_)
-    workspace = cls(cfg)
+    workspace: Workspace = cls(cfg)
     workspace.train()
 
 
