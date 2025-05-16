@@ -31,17 +31,27 @@ class IConViT(ViT):
         num_samples_unmask: int,
         temperature: float,
         enable_fps: bool,
-        enable_weighted_loss: bool,
+        enable_multi_level_contrast: bool,
         gamma: float,
         *args,
         **kwargs
     ) -> None:
+        """
+        Args:
+            num_samples_mask (int): number of samples in masked regions.
+            num_samples_unmask (int): number of samples in unmasked regions.
+            temperature (float): temperature coefficient of the InfoNce loss.
+            enable_fps (bool): if True, enable Farthest Point Sampling (FPS);
+                otherwise, use random sampling.
+            enable_multi_level_contrast (bool): if True, enable multi-level contrast.
+            gamma (float): weighting coefficient of multi-level contrast.
+        """
         super().__init__(*args, **kwargs)
         self.num_samples_mask = num_samples_mask
         self.num_samples_unmask = num_samples_unmask
         self.temperature = temperature
         self.enable_fps = enable_fps
-        self.enable_weighted_loss = enable_weighted_loss
+        self.enable_multi_level_contrast = enable_multi_level_contrast
         self.gamma = gamma
 
     def patchify(self, x: Tensor) -> Tensor:
@@ -54,12 +64,12 @@ class IConViT(ViT):
     def forward_loss(self, x: Tensor, mask: Tensor) -> Tensor:
         """
         Args:
-            x (torch.Tensor): token sequences with cls tokens (batch_size, 1+seq_len, embed_dim).
+            x (torch.Tensor): token sequences with CLS tokens (batch_size, 1+seq_len, embed_dim).
             mask (torch.Tensor): binary masks (batch_size, seq_len), where 1 for masked regions
                 and 0 for unmasked regions.
 
         Returns:
-            loss (torch.Tensor): contrastive loss.
+            loss (torch.Tensor): the contrastive loss.
         """
         tokens = x[:, 1:]
         # Count masked and unmasked tokens
@@ -90,22 +100,21 @@ class IConViT(ViT):
         # Losses are computed on batches with enough samples.
         flag = torch.logical_and(count_mask >= self.num_samples_mask, count_unmask >= self.num_samples_unmask).float()
         loss = ((loss_unmask + loss_mask) * flag).sum() / flag.sum()
-        # loss = ((loss_unmask + loss_mask) * flag).mean()
         return loss
         
     def forward(self, x: Tensor, mask: Union[Tensor, None] = None) -> Union[Tensor, Tuple]:
         if mask is None:
             return super().forward(x)
         else:
-            # For each mask patch, it is regarded as fully masked if the square of mask
-            # region is larger than half of the total patch square.
+            # For each mask patch, it is assigned a value of 1 if there are more masked pixels
+            # than unmasked pixels; otherwise, assigned a value of 0.
             mask = self.patchify(mask.unsqueeze(1))
             mask = (mask.sum(dim=-1) > self.patch_embed.patch_size[0] ** 2 / 2).float()
             x = self.patch_embed(x)
             cls_token = self.cls_token.expand(x.shape[0], -1, -1)
             x = torch.cat([cls_token, x], dim=1)
             x = x + self.pos_embed
-            if self.enable_weighted_loss:
+            if self.enable_multi_level_contrast:
                 weights = torch.exp(self.gamma * torch.arange(len(self.blocks), device=x.device))
                 weights = weights / weights.sum()
                 loss = list()
@@ -162,11 +171,11 @@ class MultiViewImageEncoder(nn.Module):
                 mask = masks.get(key)
                 if mask is not None:
                     mask = rearrange(mask, 'b l ... -> (b l) ...')
-            # Crop images and masks in the same way. This is done by 
             if mask is None:
                 image = self.transforms(image)
                 inputs = [image]
             else:
+                # Apply identical transformations to images and masks
                 mask = mask.unsqueeze(1).repeat(1, 3, 1, 1)
                 image_mask_stack = torch.stack([image, mask])
                 image_mask_stack = rearrange(image_mask_stack, 't n ... -> (t n) ...')
