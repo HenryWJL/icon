@@ -1,14 +1,14 @@
 from setuptools import setup, find_packages
 
-__version__ = "0.1.0"
+__version__ = "0.0.1"
 
 setup(
     name = "icon",
     version=__version__,
     description="Inter-token Contrast (ICon).",
-    author="Junlin Wang",
-    author_email="12112921@mail.sustech.edu.cn",
-    url="https://github.com/HenryWJL/icon",
+    author="",
+    author_email="",
+    url="",
     packages=[
         package for package in find_packages() 
         if package.startswith("icon")
