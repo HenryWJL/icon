@@ -49,10 +49,10 @@ class CheckpointManager:
         Args:
             save_dir (str): directory used for saving checkpoints.
             val_freq (int, optional): validation frequency.
-            topk (int, optional): number of checkpoints to save.
+            topk (int, optional): only checkpoints with top-k performance would be saved.
             mode (str, optional): checkpoint saving mode.
-                - 'max': save checkpoints associated with maximum metric values.
-                - 'min': save checkpoints associated with minimum metric values.
+                - 'max': save the checkpoints with maximum metric values.
+                - 'min': save the checkpoints with minimum metric values.
             save_last (bool, optional): if True, save the checkpoint after the last epoch.
         """
         assert topk >= 0, "@topk must be a non-negative integer!"
