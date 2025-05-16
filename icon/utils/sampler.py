@@ -1,3 +1,8 @@
+"""
+MIT License
+
+Copyright (c) 2023 Columbia Artificial Intelligence and Robotics Lab
+"""
 import math
 import numba
 import torch
@@ -45,10 +50,10 @@ def farthest_point_sample(
     """
     Args:
         x (torch.Tensor): flattened 2D feature maps (batch_size, height * width, dim).
-        num_samples (int): number of samples to generate.
+        num_samples (int): number of samples.
         p (int, optional): p-norm for distance function.
         mask (torch.Tensor, optional): binary masks (batch_size, height * width).
-            If provided, sampling would be conducted in masked regions (where masks == 1).
+            If provided, sampling would be conducted in the masked region (where @mask == 1).
 
     Returns:
         samples (torch.Tensor): sampled points (batch_size, num_samples, dim)
@@ -78,8 +83,8 @@ def farthest_point_sample(
     coordinates = coordinates[:, new_ids]
     masks = masks[:, new_ids]
     ids_sort = torch.argsort(masks, dim=1, descending=True)
-    farthest_ids = ids_sort[:, 0]  # Initial points' ids
-    # Iterate
+    farthest_ids = ids_sort[:, 0]
+    # Iterate over all points
     for i in range(num_samples):
         sample_ids[:, i] = farthest_ids
         sample_coordinates = coordinates[batch_ids, farthest_ids].unsqueeze(1)
@@ -90,19 +95,7 @@ def farthest_point_sample(
     samples = x[batch_ids, sample_ids]
     return samples
 
-
-"""
-MIT License
-
-Copyright (c) 2023 Columbia Artificial Intelligence and Robotics Lab
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-"""
+# Copied from https://github.com/real-stanford/diffusion_policy/blob/5ba07ac6661db573af695b419a7947ecb704690f/diffusion_policy/common/sampler.py#L8
 @numba.jit(nopython=True)
 def create_indices(
     episode_ends:np.ndarray, sequence_length:int, 
@@ -145,7 +138,7 @@ def create_indices(
     indices = np.array(indices)
     return indices
 
-
+# Copied from https://github.com/real-stanford/diffusion_policy/blob/5ba07ac6661db573af695b419a7947ecb704690f/diffusion_policy/common/sampler.py#L77
 class SequenceSampler:
     def __init__(self, 
         replay_buffer: ReplayBuffer, 
