@@ -20,18 +20,22 @@ This will automatically install all dependencies required to reproduce our exper
  
 ## 💻 Training
 ### Downloading Dataset
-We provide a new dataset spanning 8 manipulation tasks across 3 different robots from the RLBench and Robosuite benchmarks. To use our dataset, create a `data` subdirectory in the project root and download the dataset from the web:
+We provide a new dataset spanning 8 manipulation tasks across 3 different robots from the RLBench and Robosuite benchmarks. To use our dataset, create a subdirectory at `data` in the project root and download the dataset from the web:
 ```bash
 mkdir -p data
 wget -P data TODO
 ``` 
 
-### ⏳ Running for Epochs
-Now it's time to have a try! Run the following command to start training a new policy with seed 1 on GPU:
+### Running on a Device 
+Now it’s time to give it a try! You can run `scripts/train.py` to train any algorithm on any task you like.
+For example, to train a CNN-based diffusion policy on the *Open Box* task, simply run:
 ```bash
-python scripts/train.py --config-name=clear.yaml task=close_door seed=1 device=cuda dataset_dir='data/close_door'
+python scripts/train.py task=open_box algo=icon_diffusion_unet
 ```
-This will load configuration from `cross_embodiment/configs/workspaces/clear.yaml` and create a directory `outputs/$WORKSPACE_NAME/$TASK_NAME/YYYY-MM-DD/HH-MM-SS` where configuration files, logging files, and checkpoints are written to. For more details of model and training configuration, find them under `cross_embodiment/configs/workspaces`.
+This will automatically create a subdirectory at `outputs/TASK_NAME/ALGO_NAME/YYYY-MM-DD/HH-MM-SS`, where configuration files, log files, and checkpoints will be saved. If you want to run on a different device with a different seed, simply append the desired arguments to the original command:
+```bash
+python scripts/train.py task=open_box algo=icon_diffusion_unet train.device=cuda:0 train.seed=100
+```
 
 ### 📐 Evaluating Pre-trained Checkpoints in Simulation
 You can evaluate task success rate by running the following command: 
