@@ -1,8 +1,8 @@
 import torch
 import torch.nn as nn
 from torch import Tensor
-from torch.optim import Optimizer
 from typing import Dict
+from torch.optim import Optimizer
 from icon.utils.normalizer import Normalizer
 
 
