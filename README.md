@@ -1,4 +1,4 @@
-# Intra Contrast (ICon)
+# Inter-token Contrast (ICon)
 This is the official PyTorch implementation of *Intra Contrast*.
 
 ## 🔧 Installation
