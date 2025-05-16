@@ -19,12 +19,12 @@ pip install git+https://github.com/HenryWJL/icon.git
 This will automatically install all dependencies required to reproduce our experimental results in simulation. Note that running the RLBench environment requires **CoppeliaSim** to be installed. If you haven't installed CoppeliaSim yet, please follow the instructions [here](https://github.com/stepjam/RLBench?tab=readme-ov-file#install) to set it up.
  
 ## 💻 Training
-### 📥 Downloading Data
-We provide a new dataset spanning 8 manipulation tasks across 3 different robots from the RLBench and Robosuite benchmarks. 
-
-## 📋 Usage Instructions
-
-
+### Downloading Dataset
+We provide a new dataset spanning 8 manipulation tasks across 3 different robots from the RLBench and Robosuite benchmarks. To use our dataset, create a `data` subdirectory in the project root and download the dataset from the web:
+```bash
+mkdir -p data
+wget -P data TODO
+``` 
 
 ### ⏳ Running for Epochs
 Now it's time to have a try! Run the following command to start training a new policy with seed 1 on GPU:
