@@ -70,8 +70,7 @@ class Normalizer:
     ) -> Union[Dict, Tensor]:
         """
         Args:
-            key (str or None, optional): if specified, return normalized @inputs
-                associated with @key.
+            key (str or None, optional): if given, return normalized @inputs associated with @key.
         """
         def _normalize(
             input: Tensor,
