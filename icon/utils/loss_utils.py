@@ -28,6 +28,7 @@ def info_nce_loss(
     neg_logit = (query @ neg_key.transpose(-2, -1)).repeat(1, N, 1).reshape(B * N, -1)
     logit = torch.cat([pos_logit, neg_logit], dim=-1)  # (B * N, 1 + M)
     label = torch.zeros(B * N, dtype=torch.long, device=query.device)
+    # Adapted from MoCo codebase
     loss = F.cross_entropy(logit / temp, label, reduction='none')
     loss = loss.reshape(B, N).mean(dim=1)
     if reduction == 'none':
