@@ -5,7 +5,7 @@ __version__ = "0.1.0"
 setup(
     name = "icon",
     version=__version__,
-    description="Intra Contrast (ICon).",
+    description="Inter-token Contrast (ICon).",
     author="Junlin Wang",
     author_email="12112921@mail.sustech.edu.cn",
     url="https://github.com/HenryWJL/icon",
