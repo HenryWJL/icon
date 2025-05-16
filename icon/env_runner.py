@@ -18,18 +18,19 @@ class EnvRunner:
         max_episode_steps: Optional[int] = 200,
         num_episodes: Optional[int] = 50,
         initial_seed: Optional[int] = 10000,
+        enable_temporal_ensemble: Optional[bool] = True,
         video_save_dir: Union[str, None] = None
     ) -> None:
-        # env = VideoRecordingWrapper(
-        #     env=env,
-        #     video_save_dir=video_save_dir
-        # )
+        env = VideoRecordingWrapper(
+            env=env,
+            video_save_dir=video_save_dir
+        )
         env = MultiStepWrapper(
             env=env,
             obs_horizon=obs_horizon,
             action_horizon=action_horizon,
             max_episode_steps=max_episode_steps,
-            enable_temporal_ensemble=True
+            enable_temporal_ensemble=enable_temporal_ensemble
         )
         self.env = env
         self.max_episode_steps = max_episode_steps
