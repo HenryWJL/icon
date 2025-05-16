@@ -1,3 +1,9 @@
+"""
+MIT License
+
+Copyright (c) 2023 Columbia Artificial Intelligence and Robotics Lab
+Copyright (c) 2023 Stony Brook Robotics Lab
+"""
 import math
 import torch
 import torch.nn.functional as F
@@ -105,7 +111,7 @@ class ConditionalUnet1D(nn.Module):
         x = x.permute(0, 2, 1)
         return x
     
-
+# Adapted from https://github.com/LostXine/crossway_diffusion/blob/main/diffusion_policy/model/diffusion/conditional_unet1d.py#L282
 class ConditionalUnet1DwDec(ConditionalUnet1D):
 
     def __init__(
@@ -257,39 +263,3 @@ class ConditionalUnet1DwDec(ConditionalUnet1D):
                 recons_loss += image_recons_loss
             recons_loss += F.mse_loss(recons['low_dims'], obs_targets['low_dims'])
             return x, recons_loss
-
-
-
-if __name__ == "__main__":
-    model = ConditionalUnet1DwDec(
-        input_dim=7,
-        obs_cond_dim=896,
-        timestep_embed_dim=128,
-        down_dims=[256, 512, 1024],
-        kernel_size=5,
-        n_groups=8,
-        obs_horizon=2,
-        cameras=['front_camera', 'wrist_camera'],
-        shape_meta={
-            'images': 256,
-            'low_dims': 14
-        },
-        decode_pe_dim=64,
-        decode_resolution=2,
-        decode_dims=[64, 128],
-        decode_low_dim_dims=[4, 2, 1],
-    )
-    x, recons_loss = model.forward(
-        torch.rand(3, 16, 7),
-        torch.randint(0, 10, (3,), dtype=torch.long),
-        torch.rand(3, 896),
-        dict(
-            images=dict(
-                front_camera=torch.rand(3, 2, 3, 256, 256),
-                wrist_camera=torch.rand(3, 2, 3, 256, 256)
-            ),
-            low_dims=torch.rand(3, 2, 14)
-        )
-    )
-    print(x.shape)
-    print(recons_loss)

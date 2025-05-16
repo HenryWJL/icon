@@ -1,3 +1,8 @@
+"""
+MIT License
+
+Copyright (c) 2023 Columbia Artificial Intelligence and Robotics Lab
+"""
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -12,7 +17,7 @@ from icon.models.diffusion.transformer import TransformerForDiffusion
 from icon.policies.base_policy import BasePolicy
 from icon.utils.train_utils import get_optim_groups
 
-
+# Adapted from https://github.com/real-stanford/diffusion_policy/blob/main/diffusion_policy/policy/diffusion_transformer_hybrid_image_policy.py
 class DiffusionTransformerPolicy(BasePolicy):
     
     def __init__(

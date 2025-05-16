@@ -1,3 +1,8 @@
+"""
+MIT License
+
+Copyright (c) 2023 Columbia Artificial Intelligence and Robotics Lab
+"""
 from torch import nn
 from torch import Tensor
 from einops import rearrange

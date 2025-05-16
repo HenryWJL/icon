@@ -1,3 +1,8 @@
+"""
+MIT License
+
+Copyright (c) 2023 Columbia Artificial Intelligence and Robotics Lab
+"""
 import random
 import torch
 import torch.nn as nn

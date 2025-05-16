@@ -1,3 +1,8 @@
+"""
+MIT License
+
+Copyright (c) 2023 Columbia Artificial Intelligence and Robotics Lab
+"""
 import torch
 from torch.utils.data import Dataset
 from typing import Optional, Dict, List
