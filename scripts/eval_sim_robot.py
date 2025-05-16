@@ -13,9 +13,9 @@ OmegaConf.register_new_resolver("eval", eval, replace=True)
 @click.option("-a", "--algo", type=str, required=True, help="Algorithm name.")
 @click.option("-c", "--checkpoint", type=str, default="", help="Pretrained checkpoint.")
 @click.option("-d", "--device", type=str, default="cuda", help="Device type.")
-@click.option("-nt", "--num_trials", type=int, default=5, help="Number of trials.")
+@click.option("-ne", "--num_episodes", type=int, default=50, help="Number of episodes.")
 @click.option("-rm", "--render_mode", type=str, default="rgb_array", help="Rendering mode.")
-def main(task, algo, checkpoint, device, num_trials, render_mode):
+def main(task, algo, checkpoint, device, num_episodes, render_mode):
     with hydra.initialize_config_dir(
         config_dir=str(Path(__file__).parent.parent.joinpath("icon/configs")),
         version_base="1.2" 
@@ -23,7 +23,7 @@ def main(task, algo, checkpoint, device, num_trials, render_mode):
         overrides = [
             f'task={task}',
             f'algo={algo}',
-            f'task.env_runner.num_trials={num_trials}',
+            f'task.env_runner.num_episodes={num_episodes}',
             f'task.env_runner.env.render_mode={render_mode}',
         ]
         cfg = hydra.compose(config_name="config", overrides=overrides)
@@ -42,12 +42,6 @@ def main(task, algo, checkpoint, device, num_trials, render_mode):
             policy.load_state_dicts(state_dicts)
 
         env_runner.run(policy, device)
-
-        # for i in range(10, 13):
-        #     checkpoint = list(Path(f"/home/wangjl/Downloads/checkpoints").glob(f"{i * 50}_*.pth"))[0]
-        #     state_dicts = torch.load(str(checkpoint), map_location=device)
-        #     policy.load_state_dicts(state_dicts)
-        #     env_runner.run(policy, device)
     
 
 if __name__ == "__main__":

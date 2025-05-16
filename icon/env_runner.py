@@ -16,14 +16,14 @@ class EnvRunner:
         obs_horizon: int,
         action_horizon: int,
         max_episode_steps: Optional[int] = 200,
-        num_trials: Optional[int] = 50,
+        num_episodes: Optional[int] = 50,
         initial_seed: Optional[int] = 10000,
         video_save_dir: Union[str, None] = None
     ) -> None:
-        env = VideoRecordingWrapper(
-            env=env,
-            video_save_dir=video_save_dir
-        )
+        # env = VideoRecordingWrapper(
+        #     env=env,
+        #     video_save_dir=video_save_dir
+        # )
         env = MultiStepWrapper(
             env=env,
             obs_horizon=obs_horizon,
@@ -33,7 +33,7 @@ class EnvRunner:
         )
         self.env = env
         self.max_episode_steps = max_episode_steps
-        self.num_trials = num_trials
+        self.num_episodes = num_episodes
         self.initial_seed = initial_seed
     
     def _process_obs(self, raw_obs: Dict) -> Dict:
@@ -66,13 +66,13 @@ class EnvRunner:
         #     episodes.append(old_episodes[i - 1])
 
         success = 0
-        for t in range(self.num_trials):
+        for t in range(self.num_episodes):
         # for t in episodes:
             seed = self.initial_seed + t
             obs = self.env.reset(seed=seed)
             pbar = tqdm.tqdm(
                 total=self.max_episode_steps,
-                desc=f"Trial {t + 1}/{self.num_trials}", 
+                desc=f"Trial {t + 1}/{self.num_episodes}", 
                 leave=False,
                 mininterval=5.0
             )
@@ -101,6 +101,6 @@ class EnvRunner:
                 else:
                     pbar.update(action.shape[1])
             pbar.close()
-        print(f"Success rate: {success / self.num_trials}")
+        print(f"Success rate: {success / self.num_episodes}")
         # Clear out video buffer
         self.env.reset()
