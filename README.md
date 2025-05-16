@@ -1,5 +1,6 @@
 # Inter-token Contrast (ICon)
-This is the official PyTorch implementation of *Intra Contrast*.
+
+<img src="assets/icon.svg" alt="drawing" width="100%"/>
 
 ## 🔧 Installation
 First create a conda environment and install all dependencies.
