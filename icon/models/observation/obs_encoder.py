@@ -16,6 +16,8 @@ class MultiModalObsEncoder(nn.Module):
     ) -> None:
         """
         Args:
+            low_dim_shape (int): shape of the low-dimensional state.
+            low_dim_embed_dim (int): embedding dimension of the low-dimensional state.
             flatten_features (bool, optional): if True, features with shape
                 (batch_size, obs_horizon, dim) would be flattened into shape
                 (batch_size, obs_horizon * dim) before returned.
