@@ -26,7 +26,7 @@ class VideoRecordingWrapper(gym.Wrapper):
         self.global_step += 1
         if self.record_videos:
             self.frames = list()
-            self.video_recoder = imageio.get_writer(self.video_save_dir.joinpath(f"trial_{str(self.global_step).zfill(3)}.mp4"), fps=24)
+            self.video_recoder = imageio.get_writer(self.video_save_dir.joinpath(f"episode_{str(self.global_step).zfill(3)}.mp4"), fps=24)
         return obs
     
     def step(self, action: np.ndarray) -> Tuple:
