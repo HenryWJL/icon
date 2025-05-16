@@ -23,7 +23,7 @@ policy:
         num_samples_unmask: 50
         temperature: 0.3
         enable_fps: true
-        enable_weighted_loss: true
+        enable_multi_level_contrast: true
         gamma: 0.1
         
       cameras: ${task.cameras}
