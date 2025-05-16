@@ -55,7 +55,7 @@ class Workspace:
         # Optimizer
         self.optimizer = self.policy.get_optimizer(**cfg.train.optimizer)
         to(self.optimizer, self.device)
-        # LR scheduler
+        # Learning rate scheduler
         self.num_epochs = cfg.train.num_epochs
         self.lr_scheduler = hydra.utils.instantiate(
             cfg.train.lr_scheduler,
@@ -63,7 +63,7 @@ class Workspace:
             num_training_steps=self.num_epochs * len(self.train_dataloader),
             last_epoch=-1
         )
-        # Exponential Moving Average
+        # Exponential Moving Average (EMA)
         self.enable_ema = cfg.train.ema.enable
         if self.enable_ema:
             self.ema_policy = deepcopy(self.policy)
@@ -71,7 +71,7 @@ class Workspace:
                 cfg.train.ema.runner,
                 model=self.ema_policy
             )
-        # Weights&Biases
+        # Weights & Biases
         self.enable_wandb = cfg.train.wandb.enable
         if self.enable_wandb:
             wandb.init(
@@ -136,4 +136,4 @@ class Workspace:
         else:
             policy = self.ema_policy if self.enable_ema else self.policy
             self.ckpt_manager.save(policy.state_dicts())
-        self.logger.info("Checkpoints saved. Training terminated.")
+        self.logger.info("Training Finished.")
