@@ -2,7 +2,6 @@ import robosuite
 import numpy as np
 import gymnasium as gym
 from gymnasium import spaces
-from scipy.spatial.transform import Rotation as R
 from typing import Dict, Optional, Union, Tuple, Literal, List
 
 
@@ -91,8 +90,6 @@ class RobosuiteEnv(gym.Env):
         obs = dict()
         ee_pose = np.concatenate([raw_obs['robot0_eef_pos'], raw_obs['robot0_eef_quat']])
         gripper_qpos = raw_obs['robot0_gripper_qpos']
-        # # only for kinova3 and iiwa
-        # gripper_qpos = np.array([raw_obs['robot0_gripper_qpos'][0], raw_obs['robot0_gripper_qpos'][3]], dtype=np.float32)
         low_dims = np.concatenate([ee_pose, gripper_qpos], dtype=np.float32)
         obs['low_dims'] = low_dims
         obs.update({f'{camera}_images': np.flipud(raw_obs[f'{camera}_image']) for camera in self.cameras})
@@ -117,23 +114,3 @@ class RobosuiteEnv(gym.Env):
         obs, reward, done, info = self.robosuite_env.step(action)
         done = bool(reward) or done
         return self._extract_obs(obs), reward, done, info
-    
-
-if __name__ == "__main__":
-    env = RobosuiteEnv(
-        task='open_door',
-        cameras=['agentview', 'robot0_eye_in_hand'],
-        shape_meta=dict(
-            images=256,
-            low_dims=14,
-            actions=7
-        ),
-        render_mode='human',
-        gpu_id=0
-    )
-    env.reset()
-    for i in range(50):
-        action = np.zeros((7,)) * 0.1  # shape: (7,)
-        action[6] = -0.1
-        obs, reward, done, info = env.step(action)
-        env.render()
