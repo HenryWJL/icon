@@ -19,7 +19,7 @@ pip install git+https://github.com/HenryWJL/icon.git
 This will automatically install all dependencies required to reproduce our experimental results in simulation. Note that running the RLBench environment requires **CoppeliaSim** to be installed. If you haven't installed CoppeliaSim yet, please follow the instructions [here](https://github.com/stepjam/RLBench?tab=readme-ov-file#install) to set it up.
  
 ## 💻 Training
-### Downloading Dataset
+### Downloading a Dataset
 We provide a new dataset spanning 8 manipulation tasks across 3 different robots from the RLBench and Robosuite benchmarks. To use our dataset, create a subdirectory at `data` in the project root and download the dataset from the web:
 ```bash
 mkdir -p data
@@ -28,7 +28,7 @@ wget -P data TODO
 
 ### Running on a Device 
 Now it’s time to give it a try! You can run `scripts/train.py` to train any algorithm on any task you like.
-For example, to train a CNN-based diffusion policy on the *Open Box* task, simply run:
+For example, to train a CNN-based diffusion policy coupled with ICon on the *Open Box* task:
 ```bash
 python scripts/train.py task=open_box algo=icon_diffusion_unet
 ```
@@ -36,10 +36,18 @@ This will automatically create a subdirectory at `outputs/TASK_NAME/ALGO_NAME/YY
 ```bash
 python scripts/train.py task=open_box algo=icon_diffusion_unet train.device=cuda:0 train.seed=100
 ```
-
-### 📐 Evaluating Pre-trained Checkpoints in Simulation
-You can evaluate task success rate by running the following command: 
+To enable Weights & Biases:
 ```bash
-python scripts/eval.py -w clear -e rlbench -c @CHECKPOINT_PATH -s 100
+wandb login
+python scripts/train.py task=open_box algo=icon_diffusion_unet train.device=cuda:0 train.seed=100 train.wandb.enable=true
 ```
-This will rollout the pre-trained policy in the RLBench environment. If the robot successfully completes the task, or the running iteration exceeds the maximum rollout steps (100 in this situation), the program will automatically terminate. 
+
+## ⏳ Evaluation
+Once you have obtained a well-trained policy, you can evaluate its performance in the simulated environments. For example, to evaluate a Transformer-based diffusion policy agumented with ICon on the *Close Microwave* task for 50 episodes: 
+```bash
+python scripts/eval_sim_robot.py -t close_microwave -a icon_diffusion_transformer -c PATH_TO_YOUR_CHECKPOINT -ne 50
+```
+Videos of all episodes will be recorded and saved in `videos/TASK_NAME/ALGO_NAME`. To visualize the scene during rollout, set the rendering mode to "human":
+```bash
+python scripts/eval_sim_robot.py -t close_microwave -a icon_diffusion_transformer -c PATH_TO_YOUR_CHECKPOINT -ne 50 -rm human
+```
