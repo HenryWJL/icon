@@ -1,7 +1,7 @@
 defaults:
   - _self_
-  - task: close_drawer
-  - algo: icon_diffusion_transformer
+  - task: close_microwave
+  - algo: diffusion_unet
   - train: train_${algo}
   - dataloader: default
 
