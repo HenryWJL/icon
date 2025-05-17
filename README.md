@@ -14,17 +14,21 @@ conda activate icon_env
 ```
 Then, install the Python package:
 ```
-pip install -e .
+pip install git+https://github.com/HenryWJL/icon.git
 ```
 This will automatically install all dependencies required to reproduce our experimental results in simulation. Note that running the RLBench environment requires **CoppeliaSim** to be installed. If you haven't installed CoppeliaSim yet, please follow the instructions [here](https://github.com/stepjam/RLBench?tab=readme-ov-file#install) to set it up.
  
 ## 💻 Training
 ### Downloading a Dataset
-We provide a new dataset spanning 8 manipulation tasks across 3 different robots from the RLBench and Robosuite benchmarks. To use our dataset, create a subdirectory at `data` in the project root and download the dataset from the web:
+We provide a new dataset spanning 8 manipulation tasks across 3 different robots from the RLBench and Robosuite benchmarks. [Here](https://github.com/HenryWJL/icon/tree/main/icon/configs/task) is a complete list of tasks. To download our full dataset:
 ```bash
-mkdir -p data
-wget -P data TODO
-``` 
+python scripts/download_dataset.py
+```
+If you'd like to download the data for a specific task (e.g., *Close Drawer*):
+```bash
+python scripts/download_dataset.py -t close_drawer
+```
+You can also download the dataset directly from the [Hugging Face](https://huggingface.co/datasets/HenryWJL/icon).
 
 ### Running on a Device 
 Now it’s time to give it a try! You can run `scripts/train.py` to train any algorithm on any task you like.
