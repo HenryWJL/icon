@@ -2,7 +2,7 @@
 
 [[Project Website]](https://anonymous.4open.science/w/ICon/)
 [[Paper (Under Review)]]()
-[[Data]](https://drive.google.com/drive/folders/16Z23gQSEiagQwN_gC7KdPvEJObEH3kaS?usp=sharing)
+[[Data]](https://drive.google.com/drive/folders/1VkpOHRuycPqTrQSOI_Iyo_Nbgz7FizU5?usp=drive_link)
 
 <img src="assets/icon.svg" alt="drawing" width="100%"/>
 
