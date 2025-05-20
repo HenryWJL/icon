@@ -1,8 +1,8 @@
 # Inter-token Contrast (ICon)
 
-[[Project Website]](https://anonymous.4open.science/w/ICon/)
+[[Project Website]]()
 [[Paper (Under Review)]]()
-[[Data]](https://drive.google.com/drive/folders/1VkpOHRuycPqTrQSOI_Iyo_Nbgz7FizU5?usp=drive_link)
+[[Data]]()
 
 <img src="assets/icon.svg" alt="drawing" width="100%"/>
 
