@@ -4,7 +4,7 @@
 [[Paper (Under Review)]]()
 [[Data]](https://huggingface.co/datasets/HenryWJL/icon)
 
-<img src="assets/icon.svg" alt="drawing" width="100%"/>
+<p align="center"><img src="assets/icon.svg" alt="drawing" width="60%"/></p>
 
 ## 🔧 Installation
 We recommend that users first create a Conda environment:
@@ -36,7 +36,7 @@ For example, to train a CNN-based diffusion policy coupled with ICon on the *Ope
 ```bash
 python scripts/train.py task=open_box algo=icon_diffusion_unet
 ```
-This will automatically create a subdirectory at `outputs/TASK_NAME/ALGO_NAME/YYYY-MM-DD/HH-MM-SS`, where configuration files, log files, and checkpoints will be saved. If you want to run on a different device with a different seed, simply append the desired arguments to the original command:
+This will automatically create a subdirectory at `outputs/TASK_NAME/ALGO_NAME/YYYY-MM-DD/HH-MM-SS`, where configuration files, log files, and checkpoints will be saved. If you want to run on a different device with a different seed, simply append the desired arguments to the command:
 ```bash
 python scripts/train.py task=open_box algo=icon_diffusion_unet train.device=cuda:0 train.seed=100
 ```
@@ -51,7 +51,7 @@ Once you have obtained a well-trained policy, you can evaluate its performance i
 ```bash
 python scripts/eval_sim_robot.py -t close_microwave -a icon_diffusion_transformer -c PATH_TO_YOUR_CHECKPOINT -ne 50
 ```
-Videos of all episodes will be recorded and saved in `videos/TASK_NAME/ALGO_NAME`. To visualize the scene during rollout, set the rendering mode to "human":
+Episode videos will be recorded and saved in `videos/TASK_NAME/ALGO_NAME`. For real-time visualization, set the rendering mode to "human":
 ```bash
 python scripts/eval_sim_robot.py -t close_microwave -a icon_diffusion_transformer -c PATH_TO_YOUR_CHECKPOINT -ne 50 -rm human
 ```
