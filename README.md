@@ -51,7 +51,7 @@ Once you have obtained a well-trained policy, you can evaluate its performance i
 ```bash
 python scripts/eval_sim_robot.py -t close_microwave -a icon_diffusion_transformer -c PATH_TO_YOUR_CHECKPOINT -ne 50
 ```
-Episode videos will be recorded and saved in `videos/TASK_NAME/ALGO_NAME`. For real-time visualization, set the rendering mode to "human":
+Recorded episode videos will be saved in `videos/TASK_NAME/ALGO_NAME`. For real-time visualization, set the rendering mode to "human":
 ```bash
 python scripts/eval_sim_robot.py -t close_microwave -a icon_diffusion_transformer -c PATH_TO_YOUR_CHECKPOINT -ne 50 -rm human
 ```
