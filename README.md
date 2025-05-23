@@ -1,6 +1,6 @@
 # Inter-token Contrast (ICon)
 
-[[Project Website]](https://inter-token-contrast.github.io/icon/)
+[[Project Website]]()
 [[Paper]]()
 [[Data]](https://huggingface.co/datasets/HenryWJL/icon)
 
