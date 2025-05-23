@@ -4,7 +4,7 @@
 [[Paper (Under Review)]]()
 [[Data]](https://huggingface.co/datasets/HenryWJL/icon)
 
-<p align="center"><img src="assets/icon.svg" alt="drawing" width="60%"/></p>
+<p align="center"><img src="assets/icon.svg" alt="drawing" width="80%"/></p>
 
 ## 🔧 Installation
 We recommend that users first create a Conda environment:
