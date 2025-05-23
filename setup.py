@@ -6,9 +6,9 @@ setup(
     name = "icon",
     version=__version__,
     description="Inter-token Contrast (ICon).",
-    author="",
-    author_email="",
-    url="",
+    author="Junlin Wang",
+    author_email="12112921@mail.sustech.edu.cn",
+    url="https://github.com/HenryWJL/icon/",
     packages=[
         package for package in find_packages() 
         if package.startswith("icon")
