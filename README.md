@@ -2,7 +2,7 @@
 
 [[Project Website]]()
 [[Paper]]()
-[[Data]](https://huggingface.co/datasets/HenryWJL/icon)
+[[Data]]()
 
 [Junlin Wang](https://henrywjl.github.io/)<sup>1</sup>,
 [Zhiyun Lin](https://www.sustech.edu.cn/en/faculties/zhiyunlin-2.html)<sup>1</sup>
