@@ -2,7 +2,7 @@
 
 [[Project Website]]()
 [[Paper (Under Review)]]()
-[[Data]]()
+[[Data]](https://huggingface.co/datasets/HenryWJL/icon)
 
 <img src="assets/icon.svg" alt="drawing" width="100%"/>
 
