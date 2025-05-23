@@ -1,8 +1,13 @@
 # Inter-token Contrast (ICon)
 
-[[Project Website]]()
-[[Paper (Under Review)]]()
+[[Project Website]](https://inter-token-contrast.github.io/icon/)
+[[Paper]]()
 [[Data]](https://huggingface.co/datasets/HenryWJL/icon)
+
+[Junlin Wang](https://henrywjl.github.io/)<sup>1</sup>,
+[Zhiyun Lin](https://www.sustech.edu.cn/en/faculties/zhiyunlin-2.html)<sup>1</sup>
+
+<sup>1</sup>Southern University of Science and Technology
 
 <p align="center"><img src="assets/icon.svg" alt="drawing" width="80%"/></p>
 
