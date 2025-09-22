@@ -1,8 +1,8 @@
 # Inter-token Contrast (ICon)
 
 [[Project Website]]()
-[[Paper]]()
-[[Data]]()
+[[Paper (Under Review)]](https://arxiv.org/abs/2505.18487)
+[[Data]](https://drive.google.com/drive/folders/1VkpOHRuycPqTrQSOI_Iyo_Nbgz7FizU5?usp=drive_link)
 
 [Junlin Wang](https://henrywjl.github.io/)<sup>1</sup>,
 [Zhiyun Lin](https://www.sustech.edu.cn/en/faculties/zhiyunlin-2.html)<sup>1</sup>
