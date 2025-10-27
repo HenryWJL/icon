@@ -11,6 +11,10 @@ from icon.utils.loss_utils import info_nce_loss
 
 
 class ViT(VisionTransformer):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        del self.head
     
     def forward(self, x: Tensor) -> Tensor:
         x = self.patch_embed(x)
