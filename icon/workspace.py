@@ -199,14 +199,14 @@ class Workspace:
                     self.logger.info(f"Epoch [{epoch + 1}/{self.num_epochs}], validation loss: {round(val_loss, 5)}")
                     if self.enable_wandb:
                         wandb.log({'val_loss': val_loss})
-                    self.ckpt_manager.update(val_loss, policy_eval.state_dicts())
+                    torch.save(policy_eval.state_dicts(), str(self.ckpt_manager.save_dir.joinpath(f"{epoch + 1}.pth")))
 
         # ------------------------------
         # Save checkpoint (rank 0 only)
         # ------------------------------
         if self.local_rank == 0:
             if self.enable_val:
-                self.ckpt_manager.save_topk()
+                pass
             else:
                 final_model = self.ema_policy if self.enable_ema else (
                     self.policy.module if self.is_distributed else self.policy
