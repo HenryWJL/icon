@@ -79,7 +79,7 @@ class IConViT(ViT):
         tokens = x[:, 1:]
         # Apply hard feature masks
         scores = torch.sigmoid(self.mask_logits)  
-        topk_indices = torch.topk(scores, k).indices
+        topk_indices = torch.topk(scores, 128).indices
         hard_mask = torch.zeros_like(scores)
         hard_mask[topk_indices] = 1.0
         # straight-through estimator: use hard mask in forward, soft in backward
