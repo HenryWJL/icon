@@ -44,7 +44,7 @@ def get_optim_groups(
                 decay.add(fpn)
             elif pn.endswith("weight") and isinstance(m, module_blacklist):
                 no_decay.add(fpn)
-            elif pn.endswith("pos_embed") or pn.endswith("cls_token") or pn.endswith("reg_token"):
+            elif pn.endswith("pos_embed") or pn.endswith("cls_token") or pn.endswith("reg_token") or pn.startswith("mask"):
                 no_decay.add(fpn)
 
     param_dict = {pn: p for pn, p in model.named_parameters()}
