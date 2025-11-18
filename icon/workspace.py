@@ -53,9 +53,15 @@ class Workspace:
         self.policy.to(self.device)
 
         # Load checkpoint if provided
+        self.start_epoch = 0
+        optimizer_state_dict = None
+        lr_scheduler_state_dict = None
         if Path(cfg.train.checkpoints).is_file():
             state_dicts = torch.load(cfg.train.checkpoints, map_location=self.device)
             self.policy.load_state_dicts(state_dicts)
+            self.start_epoch = state_dicts.get('epoch', 0)
+            optimizer_state_dict = state_dicts.get('optimizer')
+            lr_scheduler_state_dict = state_dicts.get('lr_scheduler')
 
         # Wrap model with DDP
         if self.is_distributed:
@@ -107,14 +113,18 @@ class Workspace:
         self.optimizer = self.policy.module.get_optimizer(**cfg.train.optimizer) if self.is_distributed \
             else self.policy.get_optimizer(**cfg.train.optimizer)
         to(self.optimizer, self.device)
+        if optimizer_state_dict is not None:
+            self.optimizer.load_state_dict(optimizer_state_dict)
 
         self.num_epochs = cfg.train.num_epochs
         self.lr_scheduler = hydra.utils.instantiate(
             cfg.train.lr_scheduler,
             optimizer=self.optimizer,
             num_training_steps=self.num_epochs * len(self.train_dataloader),
-            last_epoch=-1
+            last_epoch=self.start_epoch * len(self.train_dataloader) -1
         )
+        if lr_scheduler_state_dict is not None:
+            self.lr_scheduler.load_state_dict(lr_scheduler_state_dict)
 
         self.enable_ema = cfg.train.ema.enable
         if self.enable_ema:
@@ -140,7 +150,7 @@ class Workspace:
     # Training loop
     # -------------------------------------------------------------------------
     def train(self) -> None:
-        for epoch in tqdm(range(self.num_epochs), desc="Policy Training", disable=(self.local_rank != 0)):
+        for epoch in tqdm(range(self.start_epoch, self.num_epochs), desc="Policy Training", disable=(self.local_rank != 0)):
             if self.is_distributed:
                 self.train_dataloader.sampler.set_epoch(epoch)
 
@@ -200,6 +210,7 @@ class Workspace:
                     if self.enable_wandb:
                         wandb.log({'val_loss': val_loss})
                     state_dicts = policy_eval.state_dicts()
+                    state_dicts['epoch'] = epoch
                     state_dicts['optimizer'] = self.optimizer.state_dict()
                     state_dicts['lr_scheduler'] = self.lr_scheduler.state_dict()
                     torch.save(state_dicts, str(self.ckpt_manager.save_dir.joinpath(f"{epoch + 1}.pth")))
