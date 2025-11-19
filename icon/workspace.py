@@ -59,6 +59,7 @@ class Workspace:
         if Path(cfg.train.checkpoints).is_file():
             state_dicts = torch.load(cfg.train.checkpoints, map_location=self.device, weights_only=False)
             self.policy.load_state_dicts(state_dicts)
+            print("Pretrained checkpoint loaded")
             self.start_epoch = state_dicts.get('epoch', 0)
             optimizer_state_dict = state_dicts.get('optimizer')
             lr_scheduler_state_dict = state_dicts.get('lr_scheduler')
@@ -115,6 +116,7 @@ class Workspace:
         to(self.optimizer, self.device)
         if optimizer_state_dict is not None:
             self.optimizer.load_state_dict(optimizer_state_dict)
+            print("Optimizer loaded")
 
         self.num_epochs = cfg.train.num_epochs
         self.lr_scheduler = hydra.utils.instantiate(
@@ -125,6 +127,7 @@ class Workspace:
         )
         if lr_scheduler_state_dict is not None:
             self.lr_scheduler.load_state_dict(lr_scheduler_state_dict)
+            print("Learning rate scheduler loaded")
 
         self.enable_ema = cfg.train.ema.enable
         if self.enable_ema:
