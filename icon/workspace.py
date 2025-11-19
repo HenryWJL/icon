@@ -56,6 +56,7 @@ class Workspace:
         self.start_epoch = 0
         optimizer_state_dict = None
         lr_scheduler_state_dict = None
+        ema_state_dict = None
         if Path(cfg.train.checkpoints).is_file():
             state_dicts = torch.load(cfg.train.checkpoints, map_location=self.device, weights_only=False)
             self.policy.load_state_dicts(state_dicts['policy'])
@@ -63,6 +64,7 @@ class Workspace:
             self.start_epoch = state_dicts.get('epoch', 0)
             optimizer_state_dict = state_dicts.get('optimizer')
             lr_scheduler_state_dict = state_dicts.get('lr_scheduler')
+            ema_state_dict = state_dicts.get('ema_policy')
 
         # Wrap model with DDP
         if self.is_distributed:
@@ -133,7 +135,8 @@ class Workspace:
         if self.enable_ema:
             model_ref = self.policy.module if self.is_distributed else self.policy
             self.ema_policy = deepcopy(model_ref)
-            self.ema_policy.load_state_dicts(state_dicts['ema_policy'])
+            if ema_state_dict is not None:
+                self.ema_policy.load_state_dicts(ema_state_dict)
             self.ema: EMA = hydra.utils.instantiate(
                 cfg.train.ema.runner,
                 model=self.ema_policy
