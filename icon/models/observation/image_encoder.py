@@ -8,6 +8,7 @@ from copy import deepcopy
 from einops import rearrange
 from icon.utils.sampler import random_sample, farthest_point_sample
 from icon.utils.loss_utils import info_nce_loss
+from icon.models.diffusion.conv_components import Conv2dBlock, ResidualBlock2D, Upsample2d
 
 
 class ViT(VisionTransformer):
