@@ -16,6 +16,7 @@ from icon.models.observation.obs_encoder import MultiModalObsEncoder
 from icon.models.diffusion.unet import ConditionalUnet1D
 from icon.policies.base_policy import BasePolicy
 from icon.utils.train_utils import get_optim_groups
+from icon.models.diffusion.conv_components import Conv2dBlock, Upsample2d
 
 # Adapted from https://github.com/real-stanford/diffusion_policy/blob/main/diffusion_policy/policy/diffusion_unet_hybrid_image_policy.py
 class DiffusionUnetPolicy(BasePolicy):
@@ -113,7 +114,7 @@ class DiffusionUnetPolicy(BasePolicy):
             get_optim_groups(
                 self.obs_encoder,
                 obs_encoder_weight_decay,
-                (nn.Linear, Attention, nn.Conv2d),
+                (nn.Linear, Attention, nn.Conv2d, Conv2dBlock, Upsample2d),
                 (nn.LayerNorm, nn.Embedding)
             )
         )
