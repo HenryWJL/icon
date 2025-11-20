@@ -110,14 +110,13 @@ class IConViT(ViT):
     def forward_loss(self, x: Tensor, mask: Tensor) -> Tensor:
         """
         Args:
-            x (torch.Tensor): token sequences with CLS tokens (batch_size, 1+seq_len, embed_dim).
-            mask (torch.Tensor): binary masks (batch_size, seq_len), where 1 for masked regions
-                and 0 for unmasked regions.
+            x (torch.Tensor): token sequences with CLS tokens (batch_size, embed_dim).
+            mask (torch.Tensor): (batch_size, image_size, image_size)
 
         Returns:
             loss (torch.Tensor): the contrastive loss.
         """
-        mid_ld = self.decoder_embed(x[:, 0])
+        mid_ld = self.decoder_embed(x)
         mid_rgb = mid_ld.reshape(mid_ld.shape[0], -1, 2, 2)
         # Mask reconstruction
         n_upsamples = len(self.image_decoder)
@@ -142,19 +141,11 @@ class IConViT(ViT):
             cls_token = self.cls_token.expand(x.shape[0], -1, -1)
             x = torch.cat([cls_token, x], dim=1)
             x = x + self.pos_embed
-            if self.enable_multi_level_contrast:
-                weights = torch.exp(self.gamma * torch.arange(len(self.blocks), device=x.device))
-                weights = weights / weights.sum()
-                loss = list()
-                for blk in self.blocks:
-                    x = blk(x)
-                    loss.append(self.forward_loss(x, mask))
-                loss = (torch.stack(loss) * weights).sum()
-            else:
-                x = self.blocks(x)
-                loss = self.forward_loss(x, mask)
+            x = self.blocks(x)
             x = self.norm(x)
             x = x[:, 0]
+            loss = self.forward_loss(x, mask)
+            return x, loss
 
 
 # class IConViT(ViT):
