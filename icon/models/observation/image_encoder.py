@@ -279,6 +279,7 @@ class MultiViewImageEncoder(nn.Module):
         self.backbones = nn.ModuleDict({
             camera: deepcopy(backbone) for camera in cameras
         })
+        self.backbones['agentview'].init()
         transforms = list()
         transforms.append(Resize(resize_shape))
         crop = nn.Identity()
