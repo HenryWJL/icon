@@ -217,7 +217,7 @@ class Workspace:
                     if self.enable_wandb:
                         wandb.log({'val_loss': val_loss})
                     state_dicts = dict(
-                        epoch=epoch,
+                        epoch=epoch + 1,
                         policy=model_ref.state_dicts(),
                         ema_policy=self.ema_policy.state_dicts(),
                         optimizer=self.optimizer.state_dict(),
