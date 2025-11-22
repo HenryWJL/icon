@@ -61,7 +61,7 @@ class Workspace:
             state_dicts = torch.load(cfg.train.checkpoints, map_location=self.device, weights_only=False)
             self.policy.load_state_dicts(state_dicts['policy'])
             print("Pretrained checkpoint loaded")
-            self.start_epoch = state_dicts.get('epoch', 0) + 1
+            self.start_epoch = state_dicts.get('epoch', 0)
             optimizer_state_dict = state_dicts.get('optimizer')
             lr_scheduler_state_dict = state_dicts.get('lr_scheduler')
             ema_state_dict = state_dicts.get('ema_policy')
@@ -216,13 +216,14 @@ class Workspace:
                     self.logger.info(f"Epoch [{epoch + 1}/{self.num_epochs}], validation loss: {round(val_loss, 5)}")
                     if self.enable_wandb:
                         wandb.log({'val_loss': val_loss})
-                    state_dicts = dict(
-                        epoch=epoch + 1,
-                        policy=model_ref.state_dicts(),
-                        ema_policy=self.ema_policy.state_dicts(),
-                        optimizer=self.optimizer.state_dict(),
-                        lr_scheduler=self.lr_scheduler.state_dict()
-                    )
+                    # state_dicts = dict(
+                    #     epoch=epoch + 1,
+                    #     policy=model_ref.state_dicts(),
+                    #     ema_policy=self.ema_policy.state_dicts(),
+                    #     optimizer=self.optimizer.state_dict(),
+                    #     lr_scheduler=self.lr_scheduler.state_dict()
+                    # )
+                    state_dicts = policy_eval.state_dicts()
                     torch.save(state_dicts, str(self.ckpt_manager.save_dir.joinpath(f"{epoch + 1}.pth")))
 
         # ------------------------------
