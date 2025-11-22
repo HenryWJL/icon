@@ -61,7 +61,7 @@ class Workspace:
             state_dicts = torch.load(cfg.train.checkpoints, map_location=self.device, weights_only=False)
             self.policy.load_state_dicts(state_dicts['policy'])
             print("Pretrained checkpoint loaded")
-            self.start_epoch = state_dicts.get('epoch', 0)
+            self.start_epoch = state_dicts.get('epoch', 0) + 1
             optimizer_state_dict = state_dicts.get('optimizer')
             lr_scheduler_state_dict = state_dicts.get('lr_scheduler')
             ema_state_dict = state_dicts.get('ema_policy')
