@@ -30,7 +30,7 @@ class ViT(VisionTransformer):
         return x
 
 
-# With mask reconstruction
+# With two separate patch embeddings
 class IConViT(ViT):
 
     def __init__(
@@ -62,90 +62,26 @@ class IConViT(ViT):
         self.enable_multi_level_contrast = enable_multi_level_contrast
         self.gamma = gamma
 
-        self.image_size = kwargs['img_size'] 
-
     def init(self) -> None:
-        self.decoder_embed = nn.Linear(384, 512)
-        decode_dims = [64, 128]
-        decode_pe_dim = 64
-        in_out_dims = list(zip(decode_dims[:-1], decode_dims[1:]))
-        self.image_decoder = nn.ModuleList([])
-        for idx, (in_dim, out_dim) in enumerate(reversed(in_out_dims)):
-            is_last = idx >= (len(in_out_dims))
-            self.image_decoder.append(
-                nn.Sequential(
-                    ResidualBlock2D(out_dim + decode_pe_dim, in_dim, 5, 8),
-                    ResidualBlock2D(in_dim, in_dim, 5, 8),
-                    Upsample2d(in_dim) if not is_last else nn.Identity()
-                )
-            )
-        out_channels = 1
-        self.final_conv = nn.Sequential(
-            Conv2dBlock(decode_dims[0], decode_dims[0], 5, 8),
-            nn.Conv2d(decode_dims[0], out_channels, 1),
-        )
-
-    def patchify(self, x: Tensor) -> Tensor:
-        height, width = x.shape[-2:]
-        patch_size = self.patch_embed.patch_size[0]
-        assert height == width and height % patch_size == 0
-        x = rearrange(x, 'b c (h p) (w q) -> b (h w) (p q c)', p=patch_size, q=patch_size)
-        return x
-    
-    def generate_positional_embedding(self, x: Tensor, dim: int) -> Tensor:
-        b, _, h, w = x.shape
-        hidx = torch.linspace(-1, 1, steps=h)
-        widx = torch.linspace(-1, 1, steps=w)
-        freq = dim // 4
-        sh = [(2 ** i) * torch.pi * hidx for i in range(freq)]
-        sw = [(2 ** i) * torch.pi * widx for i in range(freq)]
-        grids = [torch.stack(torch.meshgrid(hi, wi, indexing='ij'), axis=0) for hi, wi in zip(sh, sw)]
-        phases = torch.concat(grids, 0)
-        assert phases.shape == (dim // 2, h, w)
-        pe = torch.concat([torch.sin(phases), torch.cos(phases)], axis=0)
-        bpe = pe.unsqueeze(0).repeat(b, 1, 1, 1)
-        bpe = bpe.to(x.device)
-        return bpe
-    
-    def forward_loss(self, x: Tensor, mask: Tensor) -> Tensor:
-        """
-        Args:
-            x (torch.Tensor): token sequences with CLS tokens (batch_size, embed_dim).
-            mask (torch.Tensor): (batch_size, image_size, image_size)
-
-        Returns:
-            loss (torch.Tensor): the contrastive loss.
-        """
-        mid_ld = self.decoder_embed(x)
-        mid_rgb = mid_ld.reshape(mid_ld.shape[0], -1, 2, 2)
-        # Mask reconstruction
-        n_upsamples = len(self.image_decoder)
-        h_res = w_res = self.image_size // (2 ** n_upsamples)
-        h_scale = w_scale = math.ceil(h_res / 2)
-        x = mid_rgb.repeat(1, 1, h_scale, w_scale)
-        x = x[:, :, :h_res, :w_res]
-        for block in self.image_decoder:
-            pos_embed = self.generate_positional_embedding(x, 64)
-            x = torch.cat([x, pos_embed], dim=1)
-            x = block(x)
-        mask_recons = self.final_conv(x)
-        recons_loss = F.mse_loss(mask_recons, mask)
-        return recons_loss
+        self.patch_embed_copy = deepcopy(self.patch_embed)
+        embed_len = self.patch_embed.num_patches * 2 + self.num_prefix_tokens
+        self.pos_embed = nn.Parameter(torch.randn(1, embed_len, self.embed_dim) * .02)
         
     def forward(self, x: Tensor, mask: Union[Tensor, None] = None) -> Union[Tensor, Tuple]:
         if mask is None:
             return super().forward(x)
         else:
-            mask = mask.unsqueeze(1)
-            x = self.patch_embed(x)
+            mask = mask.unsqueeze(1).float()
+            x_agent, x_env = x * mask, x * (1.0 - mask)
+            x_agent = self.patch_embed(x_agent)
+            x_env = self.patch_embed_copy(x_env)
             cls_token = self.cls_token.expand(x.shape[0], -1, -1)
-            x = torch.cat([cls_token, x], dim=1)
+            x = torch.cat([cls_token, x_agent, x_env], dim=1)
             x = x + self.pos_embed
             x = self.blocks(x)
             x = self.norm(x)
             x = x[:, 0]
-            loss = self.forward_loss(x, mask)
-            return x, loss
+            return x
 
 
 # class IConViT(ViT):
