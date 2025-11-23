@@ -216,14 +216,14 @@ class Workspace:
                     self.logger.info(f"Epoch [{epoch + 1}/{self.num_epochs}], validation loss: {round(val_loss, 5)}")
                     if self.enable_wandb:
                         wandb.log({'val_loss': val_loss})
-                    # state_dicts = dict(
-                    #     epoch=epoch + 1,
-                    #     policy=model_ref.state_dicts(),
-                    #     ema_policy=self.ema_policy.state_dicts(),
-                    #     optimizer=self.optimizer.state_dict(),
-                    #     lr_scheduler=self.lr_scheduler.state_dict()
-                    # )
-                    state_dicts = policy_eval.state_dicts()
+                    state_dicts = dict(
+                        epoch=epoch + 1,
+                        policy=model_ref.state_dicts(),
+                        ema_policy=self.ema_policy.state_dicts(),
+                        optimizer=self.optimizer.state_dict(),
+                        lr_scheduler=self.lr_scheduler.state_dict()
+                    )
+                    # state_dicts = policy_eval.state_dicts()
                     torch.save(state_dicts, str(self.ckpt_manager.save_dir.joinpath(f"{epoch + 1}.pth")))
 
         # ------------------------------
