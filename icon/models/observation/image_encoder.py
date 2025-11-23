@@ -81,7 +81,7 @@ class IConViT(ViT):
             x = self.blocks(x)
             x = self.norm(x)
             x = x[:, 0]
-            return x
+            return x, torch.tensor(0.0, device=x.device, requires_grad=True)
 
 
 # class IConViT(ViT):
